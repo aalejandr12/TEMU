@@ -2,13 +2,11 @@
 // CONFIGURACIÓN DE GOOGLE SHEETS
 // ==============================================
 
-// ID del Google Sheet (extrae de tu URL)
-const SHEET_ID = '1vQGDZI70YYqCd5-eOcGXgguxjhvvJZWn3sc0cpAXatA274963QQqW1SGk5AWY8jtZdnbqs6kFy4F-W_';
-const RANGE = 'A1:G500'; // Ajusta según tu rango de datos
+// URL del Google Sheet publicado (CSV export)
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTYnuk6-GJMrz-g1KE7uwImL4XfhOkyTegMbWMhkrFjKj1yWflxoGApozkV-b5j3rNMGx0fKyf_B4IN/pub?output=csv';
 
-// Tu API Key de Google (obtener en https://console.cloud.google.com)
-// IMPORTANTE: Debes crear una API Key en Google Cloud Console
-const API_KEY = 'TU_API_KEY_AQUI';
+// ID de la hoja (gid) - Por defecto es 0 para la primera hoja
+const SHEET_GID = '0';
 
 // ==============================================
 // FUNCIÓN PARA OBTENER DATOS DE GOOGLE SHEETS
@@ -16,20 +14,57 @@ const API_KEY = 'TU_API_KEY_AQUI';
 
 async function fetchSheetData() {
     try {
-        const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${RANGE}?key=${API_KEY}`;
+        // Fetch del CSV publicado
+        const response = await fetch(SHEET_URL);
         
-        const response = await fetch(url);
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
         }
         
-        const data = await response.json();
-        return parseSheetData(data.values);
+        const csvText = await response.text();
+        const rows = parseCSV(csvText);
+        
+        return parseSheetData(rows);
     } catch (error) {
         console.error('Error al obtener datos del sheet:', error);
-        showError('No se pudieron cargar los datos del Google Sheet. Verifica tu configuración.');
+        showError('No se pudieron cargar los datos del Google Sheet. Verifica que esté publicado correctamente.');
         return { shipments: [], stats: getEmptyStats() };
     }
+}
+
+// ==============================================
+// PARSEAR CSV A ARRAY
+// ==============================================
+
+function parseCSV(text) {
+    const rows = [];
+    const lines = text.split('\n');
+    
+    for (let line of lines) {
+        if (!line.trim()) continue;
+        
+        // Simple CSV parser (maneja comillas básicas)
+        const row = [];
+        let cell = '';
+        let inQuotes = false;
+        
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                row.push(cell.trim());
+                cell = '';
+            } else {
+                cell += char;
+            }
+        }
+        row.push(cell.trim());
+        rows.push(row);
+    }
+    
+    return rows;
 }
 
 // ==============================================
