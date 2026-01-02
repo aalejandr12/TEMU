@@ -152,6 +152,41 @@ function applyFilters() {
 }
 
 // ==============================================
+// SINCRONIZAR MENÚS DE FILTROS
+// ==============================================
+
+function syncFilterMenus() {
+    // Sincronizar valores entre ambos menús
+    document.getElementById('filter-year').value = activeFilters.year;
+    document.getElementById('filter-year-bar').value = activeFilters.year;
+    
+    document.getElementById('filter-status').value = activeFilters.status;
+    document.getElementById('filter-status-bar').value = activeFilters.status;
+    
+    document.getElementById('filter-date-from').value = activeFilters.dateFrom || '';
+    document.getElementById('filter-date-from-bar').value = activeFilters.dateFrom || '';
+    
+    document.getElementById('filter-date-to').value = activeFilters.dateTo || '';
+    document.getElementById('filter-date-to-bar').value = activeFilters.dateTo || '';
+}
+
+// ==============================================
+// RESETEAR FILTROS
+// ==============================================
+
+function resetFilters() {
+    activeFilters = {
+        year: '2026',
+        status: 'all',
+        dateFrom: null,
+        dateTo: null
+    };
+    
+    syncFilterMenus();
+    applyFilters();
+}
+
+// ==============================================
 // ESTADÍSTICAS VACÍAS
 // ==============================================
 
@@ -588,7 +623,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Menú de filtros
+    // Menú de filtros (gráfico de distribución)
     const filterMenuBtn = document.getElementById('filter-menu-btn');
     const filterMenu = document.getElementById('filter-menu');
     
@@ -611,26 +646,53 @@ document.addEventListener('DOMContentLoaded', () => {
         activeFilters.dateFrom = document.getElementById('filter-date-from').value;
         activeFilters.dateTo = document.getElementById('filter-date-to').value;
         
+        // Sincronizar con el otro menú
+        syncFilterMenus();
+        
         applyFilters();
         filterMenu?.classList.add('hidden');
     });
     
     // Resetear filtros
     document.getElementById('reset-filters-btn')?.addEventListener('click', () => {
-        activeFilters = {
-            year: '2026',
-            status: 'all',
-            dateFrom: null,
-            dateTo: null
-        };
+        resetFilters();
+        filterMenu?.classList.add('hidden');
+    });
+
+    // ===== Menú de filtros (gráfico de barras) =====
+    const filterMenuBtnBar = document.getElementById('filter-menu-btn-bar');
+    const filterMenuBar = document.getElementById('filter-menu-bar');
+    
+    filterMenuBtnBar?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        filterMenuBar.classList.toggle('hidden');
+    });
+    
+    // Cerrar menú al hacer click fuera
+    document.addEventListener('click', (e) => {
+        if (!filterMenuBar?.contains(e.target) && e.target !== filterMenuBtnBar) {
+            filterMenuBar?.classList.add('hidden');
+        }
+    });
+    
+    // Aplicar filtros del gráfico de barras
+    document.getElementById('apply-filters-btn-bar')?.addEventListener('click', () => {
+        activeFilters.year = document.getElementById('filter-year-bar').value;
+        activeFilters.status = document.getElementById('filter-status-bar').value;
+        activeFilters.dateFrom = document.getElementById('filter-date-from-bar').value;
+        activeFilters.dateTo = document.getElementById('filter-date-to-bar').value;
         
-        document.getElementById('filter-year').value = '2026';
-        document.getElementById('filter-status').value = 'all';
-        document.getElementById('filter-date-from').value = '';
-        document.getElementById('filter-date-to').value = '';
+        // Sincronizar con el otro menú
+        syncFilterMenus();
         
         applyFilters();
-        filterMenu?.classList.add('hidden');
+        filterMenuBar?.classList.add('hidden');
+    });
+    
+    // Resetear filtros del gráfico de barras
+    document.getElementById('reset-filters-btn-bar')?.addEventListener('click', () => {
+        resetFilters();
+        filterMenuBar?.classList.add('hidden');
     });
 
     // Refresh cada 5 minutos
