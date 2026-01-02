@@ -294,9 +294,9 @@ function createShipmentRow(shipment, isHighlighted = false) {
     const statusColor = getStatusColor(shipment.status);
     
     if (isHighlighted) {
-        tr.className = `bg-${statusColor}-50/50 hover:bg-${statusColor}-50 dark:bg-${statusColor}-900/10 dark:hover:bg-${statusColor}-900/20 transition-colors group ring-1 ring-inset ring-${statusColor}-200 dark:ring-${statusColor}-800 cursor-pointer`;
+        tr.className = `bg-${statusColor}-50/50 hover:bg-${statusColor}-50 dark:bg-${statusColor}-900/10 dark:hover:bg-${statusColor}-900/20 transition-colors group ring-1 ring-inset ring-${statusColor}-200 dark:ring-${statusColor}-800`;
     } else {
-        tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer';
+        tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors';
     }
 
     tr.innerHTML = `
@@ -313,10 +313,20 @@ function createShipmentRow(shipment, isHighlighted = false) {
                 <span class="text-slate-400">End: ${shipment.reviewEndDate}</span>
             </div>
         </td>
+        <td class="px-6 py-4 text-center">
+            <button class="detail-btn inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-md text-xs font-medium transition-colors">
+                <span class="material-symbols-outlined" style="font-size: 16px;">visibility</span>
+                Ver
+            </button>
+        </td>
     `;
 
-    // Agregar evento click para abrir modal
-    tr.addEventListener('click', () => openDetailModal(shipment));
+    // Agregar evento click al botón
+    const detailBtn = tr.querySelector('.detail-btn');
+    detailBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        openDetailModal(shipment);
+    });
 
     return tr;
 }
