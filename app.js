@@ -86,7 +86,6 @@ function getEmptyStats() {
         releasedPercent: 0
     };
 }
-}
 
 // ==============================================
 // PARSEAR DATOS DEL SHEET
