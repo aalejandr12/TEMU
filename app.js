@@ -267,7 +267,7 @@ function renderBarChart(stats) {
 // RENDERIZAR TABLA DE ENVÍOS
 // ==============================================
 
-function renderShipmentsTable(shipments, page = 1, perPage = 5) {
+function renderShipmentsTable(shipments, page = 1, perPage = 10) {
     const tbody = document.getElementById('shipments-tbody');
     tbody.innerHTML = '';
 
@@ -400,7 +400,7 @@ function searchShipments(query) {
         return searchString.includes(query.toLowerCase());
     });
 
-    renderShipmentsTable(filtered, 1, 5);
+    renderShipmentsTable(filtered, 1, 10);
 }
 
 // ==============================================
@@ -495,13 +495,13 @@ document.addEventListener('DOMContentLoaded', () => {
     // Paginación
     document.getElementById('btn-prev')?.addEventListener('click', () => {
         if (currentPage > 1) {
-            renderShipmentsTable(currentShipments, currentPage - 1, 5);
+            renderShipmentsTable(currentShipments, currentPage - 1, 10);
         }
     });
 
     document.getElementById('btn-next')?.addEventListener('click', () => {
         if (currentPage < totalPages) {
-            renderShipmentsTable(currentShipments, currentPage + 1, 5);
+            renderShipmentsTable(currentShipments, currentPage + 1, 10);
         }
     });
 
