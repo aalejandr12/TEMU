@@ -68,6 +68,90 @@ function parseCSV(text) {
 }
 
 // ==============================================
+// VARIABLES GLOBALES PARA FILTROS
+// ==============================================
+
+let allShipments = []; // Todos los datos sin filtrar
+let activeFilters = {
+    year: '2026', // Filtro por defecto: año actual
+    status: 'all',
+    dateFrom: null,
+    dateTo: null
+};
+
+// ==============================================
+// FUNCIÓN PARA PARSEAR FECHA
+// ==============================================
+
+function parseDate(dateStr) {
+    if (!dateStr || dateStr.trim() === '') return null;
+    
+    // Intenta varios formatos: DD/MM/YYYY, D/M/YYYY, etc.
+    const parts = dateStr.split('/');
+    if (parts.length === 3) {
+        const day = parseInt(parts[0]);
+        const month = parseInt(parts[1]) - 1; // Meses en JS empiezan en 0
+        const year = parseInt(parts[2]);
+        return new Date(year, month, day);
+    }
+    return null;
+}
+
+// ==============================================
+// FUNCIÓN PARA APLICAR FILTROS
+// ==============================================
+
+function applyFilters() {
+    let filtered = [...allShipments];
+    
+    // Filtro por año (basado en Prealerta)
+    if (activeFilters.year && activeFilters.year !== 'all') {
+        filtered = filtered.filter(shipment => {
+            const prealertaDate = parseDate(shipment.prealerta);
+            if (!prealertaDate) return false;
+            return prealertaDate.getFullYear().toString() === activeFilters.year;
+        });
+    }
+    
+    // Filtro por status
+    if (activeFilters.status && activeFilters.status !== 'all') {
+        filtered = filtered.filter(shipment => 
+            shipment.status.toLowerCase().includes(activeFilters.status.toLowerCase())
+        );
+    }
+    
+    // Filtro por rango de fechas (Arribo)
+    if (activeFilters.dateFrom) {
+        const fromDate = new Date(activeFilters.dateFrom);
+        filtered = filtered.filter(shipment => {
+            const arriboDate = parseDate(shipment.arribo);
+            if (!arriboDate) return false;
+            return arriboDate >= fromDate;
+        });
+    }
+    
+    if (activeFilters.dateTo) {
+        const toDate = new Date(activeFilters.dateTo);
+        filtered = filtered.filter(shipment => {
+            const arriboDate = parseDate(shipment.arribo);
+            if (!arriboDate) return false;
+            return arriboDate <= toDate;
+        });
+    }
+    
+    // Actualizar dashboard con datos filtrados
+    currentShipments = filtered;
+    const stats = calculateStats(filtered);
+    
+    renderStatsCards(stats);
+    renderDistributionChart(stats);
+    renderBarChart(stats);
+    renderShipmentsTable(filtered, 1, 10);
+    
+    console.log(`Filtros aplicados: ${filtered.length} de ${allShipments.length} registros`);
+}
+
+// ==============================================
 // ESTADÍSTICAS VACÍAS
 // ==============================================
 
@@ -452,24 +536,23 @@ async function initDashboard() {
         
         if (shipments.length === 0) {
             showError('No se encontraron datos en el Google Sheet. Verifica que el Sheet tenga datos y esté configurado correctamente.');
+            allShipments = [];
             currentShipments = [];
             renderStatsCards(getEmptyStats());
             renderDistributionChart(getEmptyStats());
             renderBarChart(getEmptyStats());
-            document.getElementById('shipments-tbody').innerHTML = '<tr><td colspan="7" class="px-6 py-8 text-center text-slate-500">No hay datos disponibles</td></tr>';
+            document.getElementById('shipments-tbody').innerHTML = '<tr><td colspan="5" class="px-6 py-8 text-center text-slate-500">No hay datos disponibles</td></tr>';
             return;
         }
         
-        currentShipments = shipments;
-
-        // Renderizar todo
-        renderStatsCards(stats);
-        renderDistributionChart(stats);
-        renderBarChart(stats);
-        renderShipmentsTable(shipments, 1, 10);
+        // Guardar todos los datos
+        allShipments = shipments;
+        
+        // Aplicar filtro por defecto (año actual 2026)
+        applyFilters();
         updateLastUpdated();
 
-        console.log(`Dashboard cargado exitosamente con ${shipments.length} registros`);
+        console.log(`Dashboard cargado exitosamente con ${shipments.length} registros totales`);
     } catch (error) {
         console.error('Error al inicializar dashboard:', error);
         showError('Error al cargar el dashboard. Revisa la consola para más detalles.');
@@ -503,6 +586,51 @@ document.addEventListener('DOMContentLoaded', () => {
         if (currentPage < totalPages) {
             renderShipmentsTable(currentShipments, currentPage + 1, 10);
         }
+    });
+
+    // Menú de filtros
+    const filterMenuBtn = document.getElementById('filter-menu-btn');
+    const filterMenu = document.getElementById('filter-menu');
+    
+    filterMenuBtn?.addEventListener('click', (e) => {
+        e.stopPropagation();
+        filterMenu.classList.toggle('hidden');
+    });
+    
+    // Cerrar menú al hacer click fuera
+    document.addEventListener('click', (e) => {
+        if (!filterMenu?.contains(e.target) && e.target !== filterMenuBtn) {
+            filterMenu?.classList.add('hidden');
+        }
+    });
+    
+    // Aplicar filtros
+    document.getElementById('apply-filters-btn')?.addEventListener('click', () => {
+        activeFilters.year = document.getElementById('filter-year').value;
+        activeFilters.status = document.getElementById('filter-status').value;
+        activeFilters.dateFrom = document.getElementById('filter-date-from').value;
+        activeFilters.dateTo = document.getElementById('filter-date-to').value;
+        
+        applyFilters();
+        filterMenu?.classList.add('hidden');
+    });
+    
+    // Resetear filtros
+    document.getElementById('reset-filters-btn')?.addEventListener('click', () => {
+        activeFilters = {
+            year: '2026',
+            status: 'all',
+            dateFrom: null,
+            dateTo: null
+        };
+        
+        document.getElementById('filter-year').value = '2026';
+        document.getElementById('filter-status').value = 'all';
+        document.getElementById('filter-date-from').value = '';
+        document.getElementById('filter-date-to').value = '';
+        
+        applyFilters();
+        filterMenu?.classList.add('hidden');
     });
 
     // Refresh cada 5 minutos
