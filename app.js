@@ -292,12 +292,6 @@ function createShipmentRow(shipment, isHighlighted = false) {
                 <span class="text-slate-400">End: ${shipment.reviewEndDate}</span>
             </div>
         </td>
-        <td class="px-6 py-4 text-slate-600 dark:text-slate-400">${shipment.timeToComplete}</td>
-        <td class="px-6 py-4 text-slate-600 dark:text-slate-400">${shipment.prealerta}</td>
-        <td class="px-6 py-4 text-slate-600 dark:text-slate-400">${shipment.arribo}</td>
-        <td class="px-6 py-4 text-slate-600 dark:text-slate-400">${shipment.liberacion}</td>
-        <td class="px-6 py-4 text-slate-600 dark:text-slate-400">${shipment.reference}</td>
-        <td class="px-6 py-4 text-slate-500 dark:text-slate-500 truncate max-w-xs text-xs" title="${shipment.comments}">${shipment.comments}</td>
     `;
 
     return tr;
