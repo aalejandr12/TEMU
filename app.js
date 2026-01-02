@@ -294,9 +294,9 @@ function createShipmentRow(shipment, isHighlighted = false) {
     const statusColor = getStatusColor(shipment.status);
     
     if (isHighlighted) {
-        tr.className = `bg-${statusColor}-50/50 hover:bg-${statusColor}-50 dark:bg-${statusColor}-900/10 dark:hover:bg-${statusColor}-900/20 transition-colors group ring-1 ring-inset ring-${statusColor}-200 dark:ring-${statusColor}-800`;
+        tr.className = `bg-${statusColor}-50/50 hover:bg-${statusColor}-50 dark:bg-${statusColor}-900/10 dark:hover:bg-${statusColor}-900/20 transition-colors group ring-1 ring-inset ring-${statusColor}-200 dark:ring-${statusColor}-800 cursor-pointer`;
     } else {
-        tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors';
+        tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer';
     }
 
     tr.innerHTML = `
@@ -314,6 +314,9 @@ function createShipmentRow(shipment, isHighlighted = false) {
             </div>
         </td>
     `;
+
+    // Agregar evento click para abrir modal
+    tr.addEventListener('click', () => openDetailModal(shipment));
 
     return tr;
 }
@@ -496,4 +499,62 @@ document.addEventListener('DOMContentLoaded', () => {
     setInterval(() => {
         initDashboard();
     }, 5 * 60 * 1000);
+});
+
+// ==============================================
+// MODAL DE DETALLES
+// ==============================================
+
+function openDetailModal(shipment) {
+    const modal = document.getElementById('detail-modal');
+    
+    // Rellenar datos
+    document.getElementById('modal-mawb-title').textContent = `${shipment.mawbFirstLeg} / ${shipment.mawbSecondLeg}`;
+    document.getElementById('modal-mawb-first').textContent = shipment.mawbFirstLeg || '-';
+    document.getElementById('modal-mawb-second').textContent = shipment.mawbSecondLeg || '-';
+    
+    // Status badge
+    const statusClass = getStatusClass(shipment.status);
+    const statusBadge = document.getElementById('modal-status-badge');
+    statusBadge.textContent = shipment.status || '-';
+    statusBadge.className = `inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${statusClass}`;
+    
+    // Dates
+    document.getElementById('modal-start-date').textContent = shipment.reviewStartDate || '-';
+    document.getElementById('modal-end-date').textContent = shipment.reviewEndDate || '-';
+    document.getElementById('modal-time-complete').textContent = shipment.timeToComplete || '-';
+    document.getElementById('modal-prealerta').textContent = shipment.prealerta || '-';
+    document.getElementById('modal-arribo').textContent = shipment.arribo || '-';
+    document.getElementById('modal-liberacion').textContent = shipment.liberacion || '-';
+    
+    // Reference & Comments
+    document.getElementById('modal-reference').textContent = shipment.reference || '-';
+    document.getElementById('modal-comments').textContent = shipment.comments || 'No comments available';
+    
+    // Mostrar modal
+    modal.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeDetailModal() {
+    const modal = document.getElementById('detail-modal');
+    modal.classList.add('hidden');
+    document.body.style.overflow = 'auto';
+}
+
+// Cerrar modal al hacer click en el backdrop
+document.addEventListener('DOMContentLoaded', () => {
+    const modal = document.getElementById('detail-modal');
+    modal?.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            closeDetailModal();
+        }
+    });
+    
+    // Cerrar con tecla Escape
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeDetailModal();
+        }
+    });
 });

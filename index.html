@@ -380,6 +380,129 @@
     </div>
 </div>
 
+<!-- Modal de Detalles -->
+<div id="detail-modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
+    <div class="bg-white dark:bg-surface-dark rounded-xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+        <!-- Header -->
+        <div class="px-6 py-4 border-b border-border-light dark:border-border-dark flex items-center justify-between bg-gradient-to-r from-primary/5 to-transparent">
+            <div>
+                <h3 class="text-lg font-semibold text-slate-900 dark:text-white">Shipment Details</h3>
+                <p class="text-sm text-slate-500 dark:text-slate-400 mt-0.5" id="modal-mawb-title">-</p>
+            </div>
+            <button onclick="closeDetailModal()" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 dark:text-slate-400 transition-colors">
+                <span class="material-symbols-outlined">close</span>
+            </button>
+        </div>
+        
+        <!-- Body -->
+        <div class="flex-1 overflow-y-auto p-6 custom-scrollbar">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- MAWB Information -->
+                <div class="col-span-2">
+                    <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">local_shipping</span>
+                        MAWB Information
+                    </h4>
+                    <div class="grid grid-cols-2 gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg">
+                        <div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">First Leg</p>
+                            <p class="text-sm font-medium text-slate-900 dark:text-white" id="modal-mawb-first">-</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Second Leg</p>
+                            <p class="text-sm font-medium text-slate-900 dark:text-white" id="modal-mawb-second">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Status -->
+                <div class="col-span-2">
+                    <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">info</span>
+                        Status
+                    </h4>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg">
+                        <div id="modal-status-badge" class="inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium">-</div>
+                    </div>
+                </div>
+
+                <!-- Review Period -->
+                <div class="col-span-2">
+                    <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">schedule</span>
+                        Review Period
+                    </h4>
+                    <div class="grid grid-cols-3 gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg">
+                        <div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Start Date</p>
+                            <p class="text-sm font-medium text-slate-900 dark:text-white" id="modal-start-date">-</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">End Date</p>
+                            <p class="text-sm font-medium text-slate-900 dark:text-white" id="modal-end-date">-</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Time to Complete</p>
+                            <p class="text-sm font-medium text-slate-900 dark:text-white" id="modal-time-complete">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Additional Dates -->
+                <div class="col-span-2">
+                    <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">event</span>
+                        Important Dates
+                    </h4>
+                    <div class="grid grid-cols-3 gap-4 bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg">
+                        <div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Prealerta</p>
+                            <p class="text-sm font-medium text-slate-900 dark:text-white" id="modal-prealerta">-</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Arribo</p>
+                            <p class="text-sm font-medium text-slate-900 dark:text-white" id="modal-arribo">-</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mb-1">Liberación</p>
+                            <p class="text-sm font-medium text-slate-900 dark:text-white" id="modal-liberacion">-</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reference -->
+                <div class="col-span-2">
+                    <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">tag</span>
+                        Reference
+                    </h4>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg">
+                        <p class="text-sm text-slate-900 dark:text-white" id="modal-reference">-</p>
+                    </div>
+                </div>
+
+                <!-- Comments -->
+                <div class="col-span-2">
+                    <h4 class="text-sm font-semibold text-slate-700 dark:text-slate-300 mb-3 flex items-center gap-2">
+                        <span class="material-symbols-outlined text-primary">comment</span>
+                        Comments
+                    </h4>
+                    <div class="bg-slate-50 dark:bg-slate-800/50 p-4 rounded-lg">
+                        <p class="text-sm text-slate-700 dark:text-slate-300" id="modal-comments">-</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <div class="px-6 py-4 border-t border-border-light dark:border-border-dark flex justify-end">
+            <button onclick="closeDetailModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-lg text-sm font-medium transition-colors">
+                Close
+            </button>
+        </div>
+    </div>
+</div>
+
 <!-- JavaScript -->
 <script src="app.js"></script>
 
