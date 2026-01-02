@@ -348,6 +348,9 @@ function updatePagination(totalItems, page, perPage) {
         <span class="font-medium text-slate-900 dark:text-white">${totalItems}</span> results
     `;
 
+    // Actualizar número de página
+    document.getElementById('current-page-btn').textContent = page;
+
     // Actualizar botones
     document.getElementById('btn-prev').disabled = page === 1;
     document.getElementById('btn-next').disabled = page === totalPages;
