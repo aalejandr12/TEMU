@@ -101,8 +101,18 @@ function parseSheetData(rows) {
     const headers = rows[0];
     const shipments = [];
 
-    // Mapeo de columnas esperadas:
-    // MAWB First Leg | MAWB Second Leg | Status | Review Start | Review End | Time to Complete | Reference | Comments
+    // Mapeo de columnas del Google Sheet:
+    // 0: MAWB first leg
+    // 1: MAWB second leg
+    // 2: Status
+    // 3: Start review
+    // 4: End review
+    // 5: Time to complete
+    // 6: Prealerta
+    // 7: Arribo
+    // 8: Liberacion
+    // 9: PO liberados Referencias
+    // 10: Comentario
     
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
@@ -115,8 +125,11 @@ function parseSheetData(rows) {
             reviewStartDate: row[3] || '',
             reviewEndDate: row[4] || '',
             timeToComplete: row[5] || '',
-            reference: row[6] || '',
-            comments: row[7] || ''
+            prealerta: row[6] || '',
+            arribo: row[7] || '',
+            liberacion: row[8] || '',
+            reference: row[9] || '',
+            comments: row[10] || ''
         };
 
         shipments.push(shipment);
@@ -280,6 +293,9 @@ function createShipmentRow(shipment, isHighlighted = false) {
             </div>
         </td>
         <td class="px-6 py-4 text-slate-600 dark:text-slate-400">${shipment.timeToComplete}</td>
+        <td class="px-6 py-4 text-slate-600 dark:text-slate-400">${shipment.prealerta}</td>
+        <td class="px-6 py-4 text-slate-600 dark:text-slate-400">${shipment.arribo}</td>
+        <td class="px-6 py-4 text-slate-600 dark:text-slate-400">${shipment.liberacion}</td>
         <td class="px-6 py-4 text-slate-600 dark:text-slate-400">${shipment.reference}</td>
         <td class="px-6 py-4 text-slate-500 dark:text-slate-500 truncate max-w-xs text-xs" title="${shipment.comments}">${shipment.comments}</td>
     `;
