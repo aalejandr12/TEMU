@@ -119,7 +119,8 @@ function applyFilters() {
     if (globalYearFilter && globalYearFilter !== 'all') {
         filtered = filtered.filter(shipment => {
             const prealertaDate = parseDate(shipment.prealerta);
-            if (!prealertaDate) return false;
+            // Si no tiene fecha, incluirlo de todos modos
+            if (!prealertaDate) return true;
             return prealertaDate.getFullYear().toString() === globalYearFilter;
         });
     }
