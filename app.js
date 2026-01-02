@@ -72,8 +72,19 @@ function parseCSV(text) {
 // ==============================================
 
 let allShipments = []; // Todos los datos sin filtrar
-let activeFilters = {
-    year: '2026', // Filtro por defecto: año actual
+
+// Filtro global de año (aplica a ambos gráficos)
+let globalYearFilter = 'all';
+
+// Filtros independientes para gráfico de distribución
+let distributionFilters = {
+    status: 'all',
+    dateFrom: null,
+    dateTo: null
+};
+
+// Filtros independientes para gráfico de barras
+let barFilters = {
     status: 'all',
     dateFrom: null,
     dateTo: null
@@ -104,85 +115,129 @@ function parseDate(dateStr) {
 function applyFilters() {
     let filtered = [...allShipments];
     
-    // Filtro por año (basado en Prealerta)
-    if (activeFilters.year && activeFilters.year !== 'all') {
+    // Filtro GLOBAL por año (basado en Prealerta) - afecta a todos
+    if (globalYearFilter && globalYearFilter !== 'all') {
         filtered = filtered.filter(shipment => {
             const prealertaDate = parseDate(shipment.prealerta);
             if (!prealertaDate) return false;
-            return prealertaDate.getFullYear().toString() === activeFilters.year;
+            return prealertaDate.getFullYear().toString() === globalYearFilter;
         });
     }
     
-    // Filtro por status
-    if (activeFilters.status && activeFilters.status !== 'all') {
-        filtered = filtered.filter(shipment => 
-            shipment.status.toLowerCase().includes(activeFilters.status.toLowerCase())
+    // Aplicar filtros del gráfico de distribución
+    let filteredDistribution = [...filtered];
+    
+    if (distributionFilters.status && distributionFilters.status !== 'all') {
+        filteredDistribution = filteredDistribution.filter(shipment => 
+            shipment.status.toLowerCase().includes(distributionFilters.status.toLowerCase())
         );
     }
     
-    // Filtro por rango de fechas (Arribo)
-    if (activeFilters.dateFrom) {
-        const fromDate = new Date(activeFilters.dateFrom);
-        filtered = filtered.filter(shipment => {
+    if (distributionFilters.dateFrom) {
+        const fromDate = new Date(distributionFilters.dateFrom);
+        filteredDistribution = filteredDistribution.filter(shipment => {
             const arriboDate = parseDate(shipment.arribo);
             if (!arriboDate) return false;
             return arriboDate >= fromDate;
         });
     }
     
-    if (activeFilters.dateTo) {
-        const toDate = new Date(activeFilters.dateTo);
-        filtered = filtered.filter(shipment => {
+    if (distributionFilters.dateTo) {
+        const toDate = new Date(distributionFilters.dateTo);
+        filteredDistribution = filteredDistribution.filter(shipment => {
             const arriboDate = parseDate(shipment.arribo);
             if (!arriboDate) return false;
             return arriboDate <= toDate;
         });
     }
     
-    // Actualizar dashboard con datos filtrados
-    currentShipments = filtered;
-    const stats = calculateStats(filtered);
+    // Aplicar filtros del gráfico de barras
+    let filteredBar = [...filtered];
     
-    renderStatsCards(stats);
-    renderDistributionChart(stats);
-    renderBarChart(stats);
+    if (barFilters.status && barFilters.status !== 'all') {
+        filteredBar = filteredBar.filter(shipment => 
+            shipment.status.toLowerCase().includes(barFilters.status.toLowerCase())
+        );
+    }
+    
+    if (barFilters.dateFrom) {
+        const fromDate = new Date(barFilters.dateFrom);
+        filteredBar = filteredBar.filter(shipment => {
+            const arriboDate = parseDate(shipment.arribo);
+            if (!arriboDate) return false;
+            return arriboDate >= fromDate;
+        });
+    }
+    
+    if (barFilters.dateTo) {
+        const toDate = new Date(barFilters.dateTo);
+        filteredBar = filteredBar.filter(shipment => {
+            const arriboDate = parseDate(shipment.arribo);
+            if (!arriboDate) return false;
+            return arriboDate <= toDate;
+        });
+    }
+    
+    // Actualizar dashboard
+    currentShipments = filtered; // Para la tabla usamos solo el filtro de año
+    const statsDistribution = calculateStats(filteredDistribution);
+    const statsBar = calculateStats(filteredBar);
+    
+    renderStatsCards(statsDistribution);
+    renderDistributionChart(statsDistribution);
+    renderBarChart(statsBar);
     renderShipmentsTable(filtered, 1, 10);
     
-    console.log(`Filtros aplicados: ${filtered.length} de ${allShipments.length} registros`);
+    console.log(`Filtro de año: ${filtered.length} registros`);
+    console.log(`Gráfico distribución: ${filteredDistribution.length} registros`);
+    console.log(`Gráfico barras: ${filteredBar.length} registros`);
 }
 
 // ==============================================
-// SINCRONIZAR MENÚS DE FILTROS
+// SINCRONIZAR FILTRO DE AÑO (SOLO)
 // ==============================================
 
-function syncFilterMenus() {
-    // Sincronizar valores entre ambos menús
-    document.getElementById('filter-year').value = activeFilters.year;
-    document.getElementById('filter-year-bar').value = activeFilters.year;
-    
-    document.getElementById('filter-status').value = activeFilters.status;
-    document.getElementById('filter-status-bar').value = activeFilters.status;
-    
-    document.getElementById('filter-date-from').value = activeFilters.dateFrom || '';
-    document.getElementById('filter-date-from-bar').value = activeFilters.dateFrom || '';
-    
-    document.getElementById('filter-date-to').value = activeFilters.dateTo || '';
-    document.getElementById('filter-date-to-bar').value = activeFilters.dateTo || '';
+function syncYearFilter() {
+    // Solo sincronizar el año entre ambos menús
+    document.getElementById('filter-year').value = globalYearFilter;
+    document.getElementById('filter-year-bar').value = globalYearFilter;
 }
 
 // ==============================================
 // RESETEAR FILTROS
 // ==============================================
 
-function resetFilters() {
-    activeFilters = {
-        year: '2026',
+function resetDistributionFilters() {
+    globalYearFilter = 'all';
+    distributionFilters = {
         status: 'all',
         dateFrom: null,
         dateTo: null
     };
     
-    syncFilterMenus();
+    document.getElementById('filter-year').value = 'all';
+    document.getElementById('filter-status').value = 'all';
+    document.getElementById('filter-date-from').value = '';
+    document.getElementById('filter-date-to').value = '';
+    
+    syncYearFilter();
+    applyFilters();
+}
+
+function resetBarFilters() {
+    globalYearFilter = 'all';
+    barFilters = {
+        status: 'all',
+        dateFrom: null,
+        dateTo: null
+    };
+    
+    document.getElementById('filter-year-bar').value = 'all';
+    document.getElementById('filter-status-bar').value = 'all';
+    document.getElementById('filter-date-from-bar').value = '';
+    document.getElementById('filter-date-to-bar').value = '';
+    
+    syncYearFilter();
     applyFilters();
 }
 
@@ -639,23 +694,23 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Aplicar filtros
+    // Aplicar filtros del gráfico de distribución
     document.getElementById('apply-filters-btn')?.addEventListener('click', () => {
-        activeFilters.year = document.getElementById('filter-year').value;
-        activeFilters.status = document.getElementById('filter-status').value;
-        activeFilters.dateFrom = document.getElementById('filter-date-from').value;
-        activeFilters.dateTo = document.getElementById('filter-date-to').value;
+        globalYearFilter = document.getElementById('filter-year').value;
+        distributionFilters.status = document.getElementById('filter-status').value;
+        distributionFilters.dateFrom = document.getElementById('filter-date-from').value;
+        distributionFilters.dateTo = document.getElementById('filter-date-to').value;
         
-        // Sincronizar con el otro menú
-        syncFilterMenus();
+        // Sincronizar solo el año con el otro menú
+        syncYearFilter();
         
         applyFilters();
         filterMenu?.classList.add('hidden');
     });
     
-    // Resetear filtros
+    // Resetear filtros de distribución
     document.getElementById('reset-filters-btn')?.addEventListener('click', () => {
-        resetFilters();
+        resetDistributionFilters();
         filterMenu?.classList.add('hidden');
     });
 
@@ -677,13 +732,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Aplicar filtros del gráfico de barras
     document.getElementById('apply-filters-btn-bar')?.addEventListener('click', () => {
-        activeFilters.year = document.getElementById('filter-year-bar').value;
-        activeFilters.status = document.getElementById('filter-status-bar').value;
-        activeFilters.dateFrom = document.getElementById('filter-date-from-bar').value;
-        activeFilters.dateTo = document.getElementById('filter-date-to-bar').value;
+        globalYearFilter = document.getElementById('filter-year-bar').value;
+        barFilters.status = document.getElementById('filter-status-bar').value;
+        barFilters.dateFrom = document.getElementById('filter-date-from-bar').value;
+        barFilters.dateTo = document.getElementById('filter-date-to-bar').value;
         
-        // Sincronizar con el otro menú
-        syncFilterMenus();
+        // Sincronizar solo el año con el otro menú
+        syncYearFilter();
         
         applyFilters();
         filterMenuBar?.classList.add('hidden');
@@ -691,7 +746,7 @@ document.addEventListener('DOMContentLoaded', () => {
     
     // Resetear filtros del gráfico de barras
     document.getElementById('reset-filters-btn-bar')?.addEventListener('click', () => {
-        resetFilters();
+        resetBarFilters();
         filterMenuBar?.classList.add('hidden');
     });
 
