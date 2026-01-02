@@ -97,43 +97,64 @@ function parseSheetData(rows) {
         return { shipments: [], stats: getEmptyStats() };
     }
 
-    // Asume que la primera fila son encabezados
-    const headers = rows[0];
+    // Leer encabezados de la primera fila
+    const headers = rows[0].map(h => h.toLowerCase().trim());
     const shipments = [];
 
-    // Mapeo de columnas del Google Sheet:
-    // 0: MAWB first leg
-    // 1: MAWB second leg
-    // 2: Status
-    // 3: Start review
-    // 4: End review
-    // 5: Time to complete
-    // 6: Prealerta
-    // 7: Arribo
-    // 8: Liberacion
-    // 9: PO liberados Referencias
-    // 10: Comentario
+    // Crear mapeo de nombres de columna a índices
+    const getColumnIndex = (names) => {
+        for (let name of names) {
+            const index = headers.findIndex(h => h.includes(name.toLowerCase()));
+            if (index !== -1) return index;
+        }
+        return -1;
+    };
+
+    // Encontrar índices de columnas por nombre (con alternativas)
+    const colMawbFirst = getColumnIndex(['mawb first', 'first leg']);
+    const colMawbSecond = getColumnIndex(['mawb second', 'second leg']);
+    const colStatus = getColumnIndex(['status']);
+    const colStartReview = getColumnIndex(['start review']);
+    const colEndReview = getColumnIndex(['end review']);
+    const colTimeComplete = getColumnIndex(['time to complete']);
+    const colPrealerta = getColumnIndex(['prealerta']);
+    const colArribo = getColumnIndex(['arribo']);
+    const colLiberacion = getColumnIndex(['liberacion', 'liberación']);
+    const colReference = getColumnIndex(['po liberados', 'referencias', 'reference']);
+    const colComments = getColumnIndex(['comentario', 'comment']);
+
+    console.log('Columnas detectadas:', {
+        mawbFirst: colMawbFirst,
+        mawbSecond: colMawbSecond,
+        status: colStatus,
+        startReview: colStartReview,
+        endReview: colEndReview
+    });
     
     for (let i = 1; i < rows.length; i++) {
         const row = rows[i];
-        if (!row[0]) continue; // Salta filas vacías
+        
+        // Validar que la fila tenga al menos el MAWB first leg
+        if (!row[colMawbFirst] || !row[colMawbFirst].toString().trim()) continue;
 
         const shipment = {
-            mawbFirstLeg: row[0] || '',
-            mawbSecondLeg: row[1] || '',
-            status: row[2] || 'Pending',
-            reviewStartDate: row[3] || '',
-            reviewEndDate: row[4] || '',
-            timeToComplete: row[5] || '',
-            prealerta: row[6] || '',
-            arribo: row[7] || '',
-            liberacion: row[8] || '',
-            reference: row[9] || '',
-            comments: row[10] || ''
+            mawbFirstLeg: colMawbFirst >= 0 ? (row[colMawbFirst] || '') : '',
+            mawbSecondLeg: colMawbSecond >= 0 ? (row[colMawbSecond] || '') : '',
+            status: colStatus >= 0 ? (row[colStatus] || 'Pending') : 'Pending',
+            reviewStartDate: colStartReview >= 0 ? (row[colStartReview] || '') : '',
+            reviewEndDate: colEndReview >= 0 ? (row[colEndReview] || '') : '',
+            timeToComplete: colTimeComplete >= 0 ? (row[colTimeComplete] || '') : '',
+            prealerta: colPrealerta >= 0 ? (row[colPrealerta] || '') : '',
+            arribo: colArribo >= 0 ? (row[colArribo] || '') : '',
+            liberacion: colLiberacion >= 0 ? (row[colLiberacion] || '') : '',
+            reference: colReference >= 0 ? (row[colReference] || '') : '',
+            comments: colComments >= 0 ? (row[colComments] || '') : ''
         };
 
         shipments.push(shipment);
     }
+
+    console.log(`Cargados ${shipments.length} registros del Google Sheet`);
 
     // Calcular estadísticas
     const stats = calculateStats(shipments);
