@@ -226,6 +226,10 @@ function applyFilters() {
     const statsDistribution = calculateStats(filteredDistribution);
     const statsBar = calculateStats(filteredBar);
     
+    // Guardar stats globalmente para actualizaciones de tema
+    window.currentStats = statsDistribution;
+    window.currentStatsBar = statsBar;
+    
     renderStatsCards(statsDistribution);
     renderDistributionChart(statsDistribution);
     renderBarChart(statsBar);
@@ -430,34 +434,87 @@ function renderStatsCards(stats) {
 }
 
 // ==============================================
-// RENDERIZAR GRÁFICO DE DISTRIBUCIÓN
+// VARIABLES PARA GRÁFICOS LIGHTWEIGHT-CHARTS
+// ==============================================
+
+let distributionChart = null;
+let distributionSeries = null;
+let barChart = null;
+let barSeries = null;
+
+// ==============================================
+// RENDERIZAR GRÁFICO DE DISTRIBUCIÓN (PIE CHART)
 // ==============================================
 
 function renderDistributionChart(stats) {
     const chartElement = document.getElementById('distribution-chart');
+    const isDark = document.documentElement.classList.contains('dark');
     
-    if (stats.total === 0) {
-        chartElement.style.background = '#f1f5f9'; // slate-100
-        document.getElementById('chart-total').textContent = '0';
-    } else {
-        // Orden: Pendiente (amarillo), Revisión (azul), Transmisión (morado), Inspección (naranja), Liberado (verde)
-        const gradient = `conic-gradient(
-            #eab308 0% ${stats.pendingPercent}%, 
-            #3b82f6 ${stats.pendingPercent}% ${stats.pendingPercent + stats.reviewPercent}%, 
-            #a855f7 ${stats.pendingPercent + stats.reviewPercent}% ${stats.pendingPercent + stats.reviewPercent + stats.transmissionsPercent}%, 
-            #f97316 ${stats.pendingPercent + stats.reviewPercent + stats.transmissionsPercent}% ${stats.pendingPercent + stats.reviewPercent + stats.transmissionsPercent + stats.inspectionPercent}%, 
-            #22c55e ${stats.pendingPercent + stats.reviewPercent + stats.transmissionsPercent + stats.inspectionPercent}% 100%
-        )`;
-        chartElement.style.background = gradient;
-        document.getElementById('chart-total').textContent = stats.total;
+    // Limpiar gráfico existente
+    if (distributionChart) {
+        distributionChart.remove();
+        distributionChart = null;
     }
+    
+    // Crear gráfico de dona con lightweight-charts
+    distributionChart = LightweightCharts.createChart(chartElement, {
+        layout: {
+            background: { color: isDark ? '#1e293b' : '#ffffff' },
+            textColor: isDark ? '#cbd5e1' : '#475569',
+        },
+        width: chartElement.clientWidth,
+        height: 250,
+        rightPriceScale: {
+            visible: false,
+        },
+        leftPriceScale: {
+            visible: false,
+        },
+        timeScale: {
+            visible: false,
+        },
+        crosshair: {
+            horzLine: {
+                visible: false,
+            },
+            vertLine: {
+                visible: false,
+            },
+        },
+        grid: {
+            vertLines: {
+                visible: false,
+            },
+            horzLines: {
+                visible: false,
+            },
+        },
+    });
+
+    distributionSeries = distributionChart.addHistogramSeries({
+        color: '#eab308',
+        priceFormat: {
+            type: 'volume',
+        },
+    });
+
+    // Crear datos para el gráfico (simulando un pie chart con barras)
+    const data = [
+        { time: '1', value: stats.pending, color: '#eab308' },      // Pendiente - amarillo
+        { time: '2', value: stats.review, color: '#3b82f6' },       // Revisión - azul  
+        { time: '3', value: stats.transmissions, color: '#a855f7' }, // Transmisión - morado
+        { time: '4', value: stats.inspection, color: '#f97316' },   // Inspección - naranja
+        { time: '5', value: stats.released, color: '#22c55e' },     // Liberado - verde
+    ];
+
+    distributionSeries.setData(data);
 
     // Actualizar leyendas
-    document.getElementById('legend-released').textContent = `${STATUS.Released.label} (${stats.releasedPercent}%)`;
+    document.getElementById('legend-pending').textContent = `${STATUS.Pending.label} (${stats.pendingPercent}%)`;
     document.getElementById('legend-review').textContent = `${STATUS.Review.label} (${stats.reviewPercent}%)`;
     document.getElementById('legend-transmission').textContent = `${STATUS.Transmissions.label} (${stats.transmissionsPercent}%)`;
-    document.getElementById('legend-pending').textContent = `${STATUS.Pending.label} (${stats.pendingPercent}%)`;
     document.getElementById('legend-inspection').textContent = `${STATUS.Inspection.label} (${stats.inspectionPercent}%)`;
+    document.getElementById('legend-released').textContent = `${STATUS.Released.label} (${stats.releasedPercent}%)`;
 }
 
 // ==============================================
@@ -465,20 +522,58 @@ function renderDistributionChart(stats) {
 // ==============================================
 
 function renderBarChart(stats) {
-    const maxValue = Math.max(stats.review, stats.pending, stats.transmissions, stats.inspection, stats.released, 1);
+    const chartElement = document.getElementById('bar-chart');
+    const isDark = document.documentElement.classList.contains('dark');
     
-    document.getElementById('bar-review').style.height = maxValue > 0 ? `${(stats.review / maxValue) * 100}%` : '0%';
-    document.getElementById('bar-pending').style.height = maxValue > 0 ? `${(stats.pending / maxValue) * 100}%` : '0%';
-    document.getElementById('bar-transmissions').style.height = maxValue > 0 ? `${(stats.transmissions / maxValue) * 100}%` : '0%';
-    document.getElementById('bar-inspection').style.height = maxValue > 0 ? `${(stats.inspection / maxValue) * 100}%` : '0%';
-    document.getElementById('bar-released').style.height = maxValue > 0 ? `${(stats.released / maxValue) * 100}%` : '0%';
+    // Limpiar gráfico existente
+    if (barChart) {
+        barChart.remove();
+        barChart = null;
+    }
+    
+    // Crear gráfico de barras
+    barChart = LightweightCharts.createChart(chartElement, {
+        layout: {
+            background: { color: isDark ? '#1e293b' : '#ffffff' },
+            textColor: isDark ? '#cbd5e1' : '#475569',
+        },
+        width: chartElement.clientWidth,
+        height: 250,
+        rightPriceScale: {
+            visible: true,
+        },
+        timeScale: {
+            visible: false,
+        },
+        grid: {
+            vertLines: {
+                color: isDark ? '#334155' : '#e2e8f0',
+                style: 2,
+            },
+            horzLines: {
+                color: isDark ? '#334155' : '#e2e8f0',
+                style: 2,
+            },
+        },
+    });
 
-    // Tooltips
-    document.getElementById('tooltip-review').textContent = stats.review || 0;
-    document.getElementById('tooltip-pending').textContent = stats.pending || 0;
-    document.getElementById('tooltip-transmissions').textContent = stats.transmissions || 0;
-    document.getElementById('tooltip-inspection').textContent = stats.inspection || 0;
-    document.getElementById('tooltip-released').textContent = stats.released || 0;
+    barSeries = barChart.addHistogramSeries({
+        priceFormat: {
+            type: 'volume',
+        },
+    });
+
+    // Datos del gráfico con colores por estado
+    const data = [
+        { time: '1', value: stats.pending, color: '#eab308' },      // Pendiente - amarillo
+        { time: '2', value: stats.review, color: '#3b82f6' },       // Revisión - azul
+        { time: '3', value: stats.transmissions, color: '#a855f7' }, // Transmisión - morado
+        { time: '4', value: stats.inspection, color: '#f97316' },   // Inspección - naranja
+        { time: '5', value: stats.released, color: '#22c55e' },     // Liberado - verde
+    ];
+
+    barSeries.setData(data);
+    barChart.timeScale().fitContent();
 }
 
 // ==============================================
@@ -907,4 +1002,24 @@ document.addEventListener('DOMContentLoaded', () => {
             closeDetailModal();
         }
     });
+});
+
+// ==============================================
+// RESIZE OBSERVER PARA GRÁFICOS RESPONSIVOS
+// ==============================================
+
+window.addEventListener('resize', () => {
+    if (distributionChart && window.currentStats) {
+        const chartElement = document.getElementById('distribution-chart');
+        distributionChart.applyOptions({
+            width: chartElement.clientWidth,
+        });
+    }
+    
+    if (barChart && window.currentStatsBar) {
+        const chartElement = document.getElementById('bar-chart');
+        barChart.applyOptions({
+            width: chartElement.clientWidth,
+        });
+    }
 });
