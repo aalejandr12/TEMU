@@ -440,12 +440,13 @@ function renderDistributionChart(stats) {
         chartElement.style.background = '#f1f5f9'; // slate-100
         document.getElementById('chart-total').textContent = '0';
     } else {
+        // Orden: Pendiente (amarillo), Revisión (azul), Transmisión (morado), Inspección (naranja), Liberado (verde)
         const gradient = `conic-gradient(
-            #22c55e 0% ${stats.releasedPercent}%, 
-            #3b82f6 ${stats.releasedPercent}% ${stats.releasedPercent + stats.reviewPercent}%, 
-            #a855f7 ${stats.releasedPercent + stats.reviewPercent}% ${stats.releasedPercent + stats.reviewPercent + stats.transmissionsPercent}%, 
-            #eab308 ${stats.releasedPercent + stats.reviewPercent + stats.transmissionsPercent}% ${stats.releasedPercent + stats.reviewPercent + stats.transmissionsPercent + stats.pendingPercent}%, 
-            #f97316 ${stats.releasedPercent + stats.reviewPercent + stats.transmissionsPercent + stats.pendingPercent}% 100%
+            #eab308 0% ${stats.pendingPercent}%, 
+            #3b82f6 ${stats.pendingPercent}% ${stats.pendingPercent + stats.reviewPercent}%, 
+            #a855f7 ${stats.pendingPercent + stats.reviewPercent}% ${stats.pendingPercent + stats.reviewPercent + stats.transmissionsPercent}%, 
+            #f97316 ${stats.pendingPercent + stats.reviewPercent + stats.transmissionsPercent}% ${stats.pendingPercent + stats.reviewPercent + stats.transmissionsPercent + stats.inspectionPercent}%, 
+            #22c55e ${stats.pendingPercent + stats.reviewPercent + stats.transmissionsPercent + stats.inspectionPercent}% 100%
         )`;
         chartElement.style.background = gradient;
         document.getElementById('chart-total').textContent = stats.total;
