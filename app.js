@@ -1,4 +1,46 @@
 // ==============================================
+// CONFIGURACIÓN DE ESTADOS
+// ==============================================
+
+const STATUS = {
+  Review: { 
+    label: "Revisión", 
+    color: "chart-blue",
+    bgClass: "bg-blue-100 dark:bg-blue-900/30",
+    textClass: "text-chart-blue",
+    icon: "visibility"
+  },
+  Pending: { 
+    label: "Pendiente", 
+    color: "chart-yellow",
+    bgClass: "bg-yellow-100 dark:bg-yellow-900/30", 
+    textClass: "text-chart-yellow",
+    icon: "hourglass_empty"
+  },
+  Transmissions: { 
+    label: "Transmisión", 
+    color: "chart-purple",
+    bgClass: "bg-purple-100 dark:bg-purple-900/30",
+    textClass: "text-chart-purple",
+    icon: "settings_input_antenna"
+  },
+  Inspection: { 
+    label: "Inspección", 
+    color: "chart-orange",
+    bgClass: "bg-orange-100 dark:bg-orange-900/30",
+    textClass: "text-chart-orange",
+    icon: "fact_check"
+  },
+  Released: { 
+    label: "Liberado", 
+    color: "chart-green",
+    bgClass: "bg-green-100 dark:bg-green-900/30",
+    textClass: "text-chart-green",
+    icon: "check_circle"
+  }
+};
+
+// ==============================================
 // CONFIGURACIÓN DE GOOGLE SHEETS
 // ==============================================
 
@@ -410,11 +452,11 @@ function renderDistributionChart(stats) {
     }
 
     // Actualizar leyendas
-    document.getElementById('legend-released').textContent = `Released (${stats.releasedPercent}%)`;
-    document.getElementById('legend-review').textContent = `Review (${stats.reviewPercent}%)`;
-    document.getElementById('legend-transmission').textContent = `Transmission (${stats.transmissionsPercent}%)`;
-    document.getElementById('legend-pending').textContent = `Pending (${stats.pendingPercent}%)`;
-    document.getElementById('legend-inspection').textContent = `Inspection (${stats.inspectionPercent}%)`;
+    document.getElementById('legend-released').textContent = `${STATUS.Released.label} (${stats.releasedPercent}%)`;
+    document.getElementById('legend-review').textContent = `${STATUS.Review.label} (${stats.reviewPercent}%)`;
+    document.getElementById('legend-transmission').textContent = `${STATUS.Transmissions.label} (${stats.transmissionsPercent}%)`;
+    document.getElementById('legend-pending').textContent = `${STATUS.Pending.label} (${stats.pendingPercent}%)`;
+    document.getElementById('legend-inspection').textContent = `${STATUS.Inspection.label} (${stats.inspectionPercent}%)`;
 }
 
 // ==============================================
@@ -465,8 +507,9 @@ function renderShipmentsTable(shipments, page = 1, perPage = 10) {
 
 function createShipmentRow(shipment, isHighlighted = false) {
     const tr = document.createElement('tr');
-    const statusClass = getStatusClass(shipment.status);
-    const statusColor = getStatusColor(shipment.status);
+    const statusInfo = getStatusInfo(shipment.status);
+    const statusClass = statusInfo.badgeClass;
+    const statusColor = statusInfo.colorName;
     
     if (isHighlighted) {
         tr.className = `bg-${statusColor}-50/50 hover:bg-${statusColor}-50 dark:bg-${statusColor}-900/10 dark:hover:bg-${statusColor}-900/20 transition-colors group ring-1 ring-inset ring-${statusColor}-200 dark:ring-${statusColor}-800`;
@@ -475,21 +518,28 @@ function createShipmentRow(shipment, isHighlighted = false) {
     }
 
     tr.innerHTML = `
-        <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">${shipment.mawbFirstLeg}</td>
+        <td class="px-6 py-4 font-medium text-slate-900 dark:text-slate-200">
+            <div class="flex items-center gap-2">
+                <span>${shipment.mawbFirstLeg}</span>
+                <button onclick="copyToClipboard('${shipment.mawbFirstLeg}')" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-slate-200 dark:hover:bg-slate-700 rounded transition-all" title="Copiar MAWB" aria-label="Copiar MAWB">
+                    <span class="material-symbols-outlined text-sm">content_copy</span>
+                </button>
+            </div>
+        </td>
         <td class="px-6 py-4 text-slate-600 dark:text-slate-400">${shipment.mawbSecondLeg}</td>
         <td class="px-6 py-4">
             <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${statusClass}">
-                ${shipment.status}
+                ${statusInfo.label}
             </span>
         </td>
         <td class="px-6 py-4 text-slate-600 dark:text-slate-400">
             <div class="flex flex-col text-[11px] leading-tight">
-                <span>Start: ${shipment.reviewStartDate}</span>
-                <span class="text-slate-400">End: ${shipment.reviewEndDate}</span>
+                <span>Inicio: ${shipment.reviewStartDate}</span>
+                <span class="text-slate-400">Fin: ${shipment.reviewEndDate}</span>
             </div>
         </td>
         <td class="px-6 py-4 text-center">
-            <button class="detail-btn inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-md text-xs font-medium transition-colors">
+            <button class="detail-btn inline-flex items-center gap-1 px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-md text-xs font-medium transition-colors focus-ring">
                 <span class="material-symbols-outlined" style="font-size: 16px;">visibility</span>
                 Ver
             </button>
@@ -507,33 +557,53 @@ function createShipmentRow(shipment, isHighlighted = false) {
 }
 
 // ==============================================
-// HELPER: OBTENER CLASE DE STATUS
+// HELPER: OBTENER INFO DE STATUS DESDE OBJETO STATUS
 // ==============================================
 
-function getStatusClass(status) {
+function getStatusInfo(status) {
     const statusLower = status.toLowerCase();
-    if (statusLower.includes('review')) {
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800';
-    } else if (statusLower.includes('pending')) {
-        return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800';
-    } else if (statusLower.includes('transmission')) {
-        return 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800';
-    } else if (statusLower.includes('inspection')) {
-        return 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 border border-orange-200 dark:border-orange-800';
-    } else if (statusLower.includes('released')) {
-        return 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 border border-green-200 dark:border-green-800';
+    let statusKey = null;
+    
+    if (statusLower.includes('review')) statusKey = 'Review';
+    else if (statusLower.includes('pending')) statusKey = 'Pending';
+    else if (statusLower.includes('transmission')) statusKey = 'Transmissions';
+    else if (statusLower.includes('inspection')) statusKey = 'Inspection';
+    else if (statusLower.includes('released')) statusKey = 'Released';
+    
+    if (statusKey && STATUS[statusKey]) {
+        const info = STATUS[statusKey];
+        return {
+            label: info.label,
+            colorName: info.color.replace('chart-', ''),
+            badgeClass: getBadgeClass(statusKey)
+        };
     }
-    return 'bg-slate-100 text-slate-800';
+    
+    return {
+        label: status,
+        colorName: 'slate',
+        badgeClass: 'bg-slate-100 text-slate-800 dark:bg-slate-900/40 dark:text-slate-300 border border-slate-200 dark:border-slate-800'
+    };
+}
+
+function getBadgeClass(statusKey) {
+    const classes = {
+        'Review': 'bg-blue-100 text-blue-800 dark:bg-blue-900/40 dark:text-blue-300 border border-blue-200 dark:border-blue-800',
+        'Pending': 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/40 dark:text-yellow-300 border border-yellow-200 dark:border-yellow-800',
+        'Transmissions': 'bg-purple-100 text-purple-800 dark:bg-purple-900/40 dark:text-purple-300 border border-purple-200 dark:border-purple-800',
+        'Inspection': 'bg-orange-100 text-orange-800 dark:bg-orange-900/40 dark:text-orange-300 border border-orange-200 dark:border-orange-800',
+        'Released': 'bg-green-100 text-green-800 dark:bg-green-900/40 dark:text-green-300 border border-green-200 dark:border-green-800'
+    };
+    return classes[statusKey] || 'bg-slate-100 text-slate-800';
+}
+
+// Mantener para compatibilidad
+function getStatusClass(status) {
+    return getStatusInfo(status).badgeClass;
 }
 
 function getStatusColor(status) {
-    const statusLower = status.toLowerCase();
-    if (statusLower.includes('review')) return 'blue';
-    if (statusLower.includes('pending')) return 'yellow';
-    if (statusLower.includes('transmission')) return 'purple';
-    if (statusLower.includes('inspection')) return 'orange';
-    if (statusLower.includes('released')) return 'green';
-    return 'slate';
+    return getStatusInfo(status).colorName;
 }
 
 // ==============================================
@@ -552,9 +622,9 @@ function updatePagination(totalItems, page, perPage) {
     const end = Math.min(page * perPage, totalItems);
 
     document.getElementById('pagination-info').innerHTML = `
-        Showing <span class="font-medium text-slate-900 dark:text-white">${start}</span> to 
-        <span class="font-medium text-slate-900 dark:text-white">${end}</span> of 
-        <span class="font-medium text-slate-900 dark:text-white">${totalItems}</span> results
+        Mostrando <span class="font-medium text-slate-900 dark:text-white">${start}</span> a 
+        <span class="font-medium text-slate-900 dark:text-white">${end}</span> de 
+        <span class="font-medium text-slate-900 dark:text-white">${totalItems}</span> resultados
     `;
 
     // Actualizar número de página
@@ -563,6 +633,29 @@ function updatePagination(totalItems, page, perPage) {
     // Actualizar botones
     document.getElementById('btn-prev').disabled = page === 1;
     document.getElementById('btn-next').disabled = page === totalPages;
+}
+
+// ==============================================
+// COPIAR AL PORTAPAPELES
+// ==============================================
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        // Mostrar notificación de éxito
+        const notification = document.createElement('div');
+        notification.className = 'fixed bottom-4 right-4 bg-green-500 text-white px-4 py-2 rounded-lg shadow-lg z-50 animate-fade-in flex items-center gap-2';
+        notification.innerHTML = `
+            <span class="material-symbols-outlined text-sm">check_circle</span>
+            <span>Copiado: ${text}</span>
+        `;
+        document.body.appendChild(notification);
+        
+        setTimeout(() => {
+            notification.remove();
+        }, 2000);
+    }).catch(err => {
+        console.error('Error al copiar:', err);
+    });
 }
 
 // ==============================================
@@ -611,7 +704,7 @@ function updateLastUpdated() {
         hour: '2-digit', 
         minute: '2-digit'
     });
-    document.getElementById('last-updated').textContent = `Last updated: ${timeString}`;
+    document.getElementById('last-updated').textContent = `Última actualización: ${timeString}`;
 }
 
 // ==============================================
@@ -769,11 +862,11 @@ function openDetailModal(shipment) {
     document.getElementById('modal-mawb-first').textContent = shipment.mawbFirstLeg || '-';
     document.getElementById('modal-mawb-second').textContent = shipment.mawbSecondLeg || '-';
     
-    // Status badge
-    const statusClass = getStatusClass(shipment.status);
+    // Status badge con label en español
+    const statusInfo = getStatusInfo(shipment.status);
     const statusBadge = document.getElementById('modal-status-badge');
-    statusBadge.textContent = shipment.status || '-';
-    statusBadge.className = `inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${statusClass}`;
+    statusBadge.textContent = statusInfo.label;
+    statusBadge.className = `inline-flex items-center px-3 py-1.5 rounded-full text-sm font-medium ${statusInfo.badgeClass}`;
     
     // Dates
     document.getElementById('modal-start-date').textContent = shipment.reviewStartDate || '-';
@@ -785,7 +878,7 @@ function openDetailModal(shipment) {
     
     // Reference & Comments
     document.getElementById('modal-reference').textContent = shipment.reference || '-';
-    document.getElementById('modal-comments').textContent = shipment.comments || 'No comments available';
+    document.getElementById('modal-comments').textContent = shipment.comments || 'Sin comentarios disponibles';
     
     // Mostrar modal
     modal.classList.remove('hidden');
