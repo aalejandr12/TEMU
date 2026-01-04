@@ -226,10 +226,6 @@ function applyFilters() {
     const statsDistribution = calculateStats(filteredDistribution);
     const statsBar = calculateStats(filteredBar);
     
-    // Guardar stats globalmente para actualizaciones de tema
-    window.currentStats = statsDistribution;
-    window.currentStatsBar = statsBar;
-    
     renderStatsCards(statsDistribution);
     renderDistributionChart(statsDistribution);
     renderBarChart(statsBar);
@@ -437,78 +433,55 @@ function renderStatsCards(stats) {
 // VARIABLES PARA GRÁFICOS LIGHTWEIGHT-CHARTS
 // ==============================================
 
-let distributionChart = null;
-let distributionSeries = null;
-let barChart = null;
-let barSeries = null;
-
 // ==============================================
-// RENDERIZAR GRÁFICO DE DISTRIBUCIÓN (PIE CHART)
+// RENDERIZAR GRÁFICO DE DISTRIBUCIÓN (DONUT CHART)
 // ==============================================
 
 function renderDistributionChart(stats) {
-    const chartElement = document.getElementById('distribution-chart');
+    const canvas = document.getElementById('distribution-chart');
+    const ctx = canvas.getContext('2d');
     const isDark = document.documentElement.classList.contains('dark');
     
-    // Limpiar gráfico existente
-    if (distributionChart) {
-        distributionChart.remove();
-        distributionChart = null;
-    }
+    // Limpiar canvas
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Crear gráfico de dona con lightweight-charts
-    distributionChart = LightweightCharts.createChart(chartElement, {
-        layout: {
-            background: { color: isDark ? '#1e293b' : '#ffffff' },
-            textColor: isDark ? '#cbd5e1' : '#475569',
-        },
-        width: chartElement.clientWidth,
-        height: 250,
-        rightPriceScale: {
-            visible: false,
-        },
-        leftPriceScale: {
-            visible: false,
-        },
-        timeScale: {
-            visible: false,
-        },
-        crosshair: {
-            horzLine: {
-                visible: false,
-            },
-            vertLine: {
-                visible: false,
-            },
-        },
-        grid: {
-            vertLines: {
-                visible: false,
-            },
-            horzLines: {
-                visible: false,
-            },
-        },
-    });
-
-    distributionSeries = distributionChart.addHistogramSeries({
-        color: '#eab308',
-        priceFormat: {
-            type: 'volume',
-        },
-    });
-
-    // Crear datos para el gráfico (simulando un pie chart con barras)
-    const data = [
-        { time: '1', value: stats.pending, color: '#eab308' },      // Pendiente - amarillo
-        { time: '2', value: stats.review, color: '#3b82f6' },       // Revisión - azul  
-        { time: '3', value: stats.transmissions, color: '#a855f7' }, // Transmisión - morado
-        { time: '4', value: stats.inspection, color: '#f97316' },   // Inspección - naranja
-        { time: '5', value: stats.released, color: '#22c55e' },     // Liberado - verde
+    const total = stats.pending + stats.review + stats.transmissions + stats.inspection + stats.released;
+    
+    // Actualizar el número total en el centro
+    document.getElementById('chart-total').textContent = total;
+    
+    if (total === 0) return;
+    
+    const centerX = canvas.width / 2;
+    const centerY = canvas.height / 2;
+    const outerRadius = 80;
+    const innerRadius = 55;
+    
+    // Datos en el orden correcto
+    const segments = [
+        { value: stats.pending, color: '#eab308', label: 'Pendiente' },
+        { value: stats.review, color: '#3b82f6', label: 'Revisión' },
+        { value: stats.transmissions, color: '#a855f7', label: 'Transmisión' },
+        { value: stats.inspection, color: '#f97316', label: 'Inspección' },
+        { value: stats.released, color: '#22c55e', label: 'Liberado' }
     ];
-
-    distributionSeries.setData(data);
-
+    
+    let currentAngle = -Math.PI / 2; // Empezar desde arriba
+    
+    segments.forEach(segment => {
+        const sliceAngle = (segment.value / total) * Math.PI * 2;
+        
+        // Dibujar segmento
+        ctx.beginPath();
+        ctx.arc(centerX, centerY, outerRadius, currentAngle, currentAngle + sliceAngle);
+        ctx.arc(centerX, centerY, innerRadius, currentAngle + sliceAngle, currentAngle, true);
+        ctx.closePath();
+        ctx.fillStyle = segment.color;
+        ctx.fill();
+        
+        currentAngle += sliceAngle;
+    });
+    
     // Actualizar leyendas
     document.getElementById('legend-pending').textContent = `${STATUS.Pending.label} (${stats.pendingPercent}%)`;
     document.getElementById('legend-review').textContent = `${STATUS.Review.label} (${stats.reviewPercent}%)`;
@@ -522,58 +495,30 @@ function renderDistributionChart(stats) {
 // ==============================================
 
 function renderBarChart(stats) {
-    const chartElement = document.getElementById('bar-chart');
-    const isDark = document.documentElement.classList.contains('dark');
+    const maxValue = Math.max(stats.pending, stats.review, stats.transmissions, stats.inspection, stats.released) || 1;
     
-    // Limpiar gráfico existente
-    if (barChart) {
-        barChart.remove();
-        barChart = null;
-    }
-    
-    // Crear gráfico de barras
-    barChart = LightweightCharts.createChart(chartElement, {
-        layout: {
-            background: { color: isDark ? '#1e293b' : '#ffffff' },
-            textColor: isDark ? '#cbd5e1' : '#475569',
-        },
-        width: chartElement.clientWidth,
-        height: 250,
-        rightPriceScale: {
-            visible: true,
-        },
-        timeScale: {
-            visible: false,
-        },
-        grid: {
-            vertLines: {
-                color: isDark ? '#334155' : '#e2e8f0',
-                style: 2,
-            },
-            horzLines: {
-                color: isDark ? '#334155' : '#e2e8f0',
-                style: 2,
-            },
-        },
-    });
-
-    barSeries = barChart.addHistogramSeries({
-        priceFormat: {
-            type: 'volume',
-        },
-    });
-
-    // Datos del gráfico con colores por estado
-    const data = [
-        { time: '1', value: stats.pending, color: '#eab308' },      // Pendiente - amarillo
-        { time: '2', value: stats.review, color: '#3b82f6' },       // Revisión - azul
-        { time: '3', value: stats.transmissions, color: '#a855f7' }, // Transmisión - morado
-        { time: '4', value: stats.inspection, color: '#f97316' },   // Inspección - naranja
-        { time: '5', value: stats.released, color: '#22c55e' },     // Liberado - verde
+    // Animar las barras con altura proporcional
+    const bars = [
+        { id: 'bar-pending', value: stats.pending, tooltip: 'tooltip-pending' },
+        { id: 'bar-review', value: stats.review, tooltip: 'tooltip-review' },
+        { id: 'bar-transmissions', value: stats.transmissions, tooltip: 'tooltip-transmissions' },
+        { id: 'bar-inspection', value: stats.inspection, tooltip: 'tooltip-inspection' },
+        { id: 'bar-released', value: stats.released, tooltip: 'tooltip-released' }
     ];
-
-    barSeries.setData(data);
-    barChart.timeScale().fitContent();
+    
+    bars.forEach(bar => {
+        const element = document.getElementById(bar.id);
+        const tooltipElement = document.getElementById(bar.tooltip);
+        const percentage = (bar.value / maxValue) * 100;
+        
+        // Animar altura
+        setTimeout(() => {
+            element.style.height = `${percentage}%`;
+        }, 100);
+        
+        // Actualizar tooltip
+        tooltipElement.textContent = bar.value;
+    });
 }
 
 // ==============================================
@@ -1004,22 +949,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
-// ==============================================
-// RESIZE OBSERVER PARA GRÁFICOS RESPONSIVOS
-// ==============================================
 
-window.addEventListener('resize', () => {
-    if (distributionChart && window.currentStats) {
-        const chartElement = document.getElementById('distribution-chart');
-        distributionChart.applyOptions({
-            width: chartElement.clientWidth,
-        });
-    }
-    
-    if (barChart && window.currentStatsBar) {
-        const chartElement = document.getElementById('bar-chart');
-        barChart.applyOptions({
-            width: chartElement.clientWidth,
-        });
-    }
-});

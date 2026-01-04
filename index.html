@@ -8,9 +8,6 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     
-    <!-- Lightweight Charts -->
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
-    
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
@@ -285,7 +282,13 @@
                     </div>
                     
                     <div class="flex-1 flex flex-col items-center justify-center relative">
-                        <div id="distribution-chart" class="w-full h-64"></div>
+                        <canvas id="distribution-chart" width="200" height="200" class="max-w-full"></canvas>
+                        <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                            <div class="text-center">
+                                <div id="chart-total" class="text-3xl font-bold text-slate-900 dark:text-white">-</div>
+                                <div class="text-xs text-slate-500 dark:text-slate-400 uppercase font-medium">Total</div>
+                            </div>
+                        </div>
                     </div>
                     
                     <div class="mt-6 grid grid-cols-2 gap-y-2 gap-x-4 text-xs">
@@ -374,7 +377,52 @@
                         </div>
                     </div>
                     
-                    <div id="bar-chart" class="w-full h-64"></div>
+                    <div class="flex-1 flex items-end justify-between gap-4 px-2 pt-4 pb-2 h-64 border-b border-border-light dark:border-border-dark border-l relative">
+                        <!-- Grid Lines -->
+                        <div class="absolute inset-0 flex flex-col justify-between pointer-events-none text-xs text-slate-400 dark:text-slate-600">
+                            <div class="w-full border-t border-dashed border-slate-200 dark:border-slate-700 relative"><span class="absolute -left-8 -top-2">200</span></div>
+                            <div class="w-full border-t border-dashed border-slate-200 dark:border-slate-700 relative"><span class="absolute -left-8 -top-2">150</span></div>
+                            <div class="w-full border-t border-dashed border-slate-200 dark:border-slate-700 relative"><span class="absolute -left-8 -top-2">100</span></div>
+                            <div class="w-full border-t border-dashed border-slate-200 dark:border-slate-700 relative"><span class="absolute -left-8 -top-2">50</span></div>
+                            <div class="w-full relative"><span class="absolute -left-8 -top-2">0</span></div>
+                        </div>
+
+                        <!-- Bars -->
+                        <div class="flex flex-col items-center gap-2 group w-1/5 z-10">
+                            <div class="relative w-full max-w-[40px] bg-yellow-100 dark:bg-yellow-900/30 rounded-t-sm h-full flex items-end overflow-hidden group-hover:opacity-80 transition-opacity cursor-pointer">
+                                <div id="bar-pending" class="w-full bg-chart-yellow transition-all duration-500" style="height: 0%;"></div>
+                                <div id="tooltip-pending" class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">0</div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col items-center gap-2 group w-1/5 z-10">
+                            <div class="relative w-full max-w-[40px] bg-blue-100 dark:bg-blue-900/30 rounded-t-sm h-full flex items-end overflow-hidden group-hover:opacity-80 transition-opacity cursor-pointer">
+                                <div id="bar-review" class="w-full bg-chart-blue transition-all duration-500" style="height: 0%;"></div>
+                                <div id="tooltip-review" class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">0</div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col items-center gap-2 group w-1/5 z-10">
+                            <div class="relative w-full max-w-[40px] bg-purple-100 dark:bg-purple-900/30 rounded-t-sm h-full flex items-end overflow-hidden group-hover:opacity-80 transition-opacity cursor-pointer">
+                                <div id="bar-transmissions" class="w-full bg-chart-purple transition-all duration-500" style="height: 0%;"></div>
+                                <div id="tooltip-transmissions" class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">0</div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col items-center gap-2 group w-1/5 z-10">
+                            <div class="relative w-full max-w-[40px] bg-orange-100 dark:bg-orange-900/30 rounded-t-sm h-full flex items-end overflow-hidden group-hover:opacity-80 transition-opacity cursor-pointer">
+                                <div id="bar-inspection" class="w-full bg-chart-orange transition-all duration-500" style="height: 0%;"></div>
+                                <div id="tooltip-inspection" class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">0</div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col items-center gap-2 group w-1/5 z-10">
+                            <div class="relative w-full max-w-[40px] bg-green-100 dark:bg-green-900/30 rounded-t-sm h-full flex items-end overflow-hidden group-hover:opacity-80 transition-opacity cursor-pointer">
+                                <div id="bar-released" class="w-full bg-chart-green transition-all duration-500" style="height: 0%;"></div>
+                                <div id="tooltip-released" class="absolute -top-8 left-1/2 -translate-x-1/2 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity">0</div>
+                            </div>
+                        </div>
+                    </div>
                     
                     <div class="flex justify-between px-2 mt-2 text-xs font-medium text-slate-500 dark:text-slate-400 text-center">
                         <div class="w-1/5">Pendiente</div>
