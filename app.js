@@ -958,14 +958,22 @@ document.addEventListener('DOMContentLoaded', () => {
             filterMenuBar.classList.toggle('hidden');
             console.log('Toggle menú barras - Nuevo estado:', filterMenuBar.classList.contains('hidden') ? 'oculto' : 'visible');
         });
-        
-        // Cerrar menú al hacer click fuera
+    }
+    
+    // Cerrar menú al hacer click fuera (usando setTimeout para evitar conflicto)
+    setTimeout(() => {
         document.addEventListener('click', (e) => {
-            if (!filterMenuBar.contains(e.target) && !filterMenuBtnBar.contains(e.target)) {
-                filterMenuBar.classList.add('hidden');
+            if (filterMenuBar && filterMenuBtnBar) {
+                const isClickInsideMenu = filterMenuBar.contains(e.target);
+                const isClickOnButton = filterMenuBtnBar.contains(e.target);
+                
+                if (!isClickInsideMenu && !isClickOnButton && !filterMenuBar.classList.contains('hidden')) {
+                    console.log('Click fuera - cerrando menú');
+                    filterMenuBar.classList.add('hidden');
+                }
             }
         });
-    }
+    }, 100);
     
     // Aplicar filtro de año del gráfico de barras (independiente)
     const applyYearBtn = document.getElementById('apply-year-filter-chart-bar');
