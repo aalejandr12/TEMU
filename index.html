@@ -8,8 +8,8 @@
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     
-    <!-- Lightweight Charts -->
-    <script src="https://unpkg.com/lightweight-charts/dist/lightweight-charts.standalone.production.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
     
     <!-- Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
@@ -380,7 +380,7 @@
                         </div>
                     </div>
                     
-                    <div id="bar-chart" class="w-full h-64"></div>
+                    <canvas id="bar-chart" class="w-full" style="max-height: 256px;"></canvas>
                     
                     <div id="bar-chart-legend" class="text-xs text-center text-slate-500 dark:text-slate-400 mt-2">
                         PQ Liberados por Mes (2026)

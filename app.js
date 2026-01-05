@@ -495,7 +495,6 @@ function renderDistributionChart(stats) {
 // ==============================================
 
 let barChart = null;
-let barSeries = null;
 
 function renderBarChart() {
     try {
@@ -505,17 +504,17 @@ function renderBarChart() {
             return;
         }
         
-        // Verificar si lightweight-charts está disponible
-        if (typeof LightweightCharts === 'undefined') {
-            console.error('LightweightCharts no está cargado');
+        // Verificar si Chart.js está disponible
+        if (typeof Chart === 'undefined') {
+            console.error('Chart.js no está cargado');
             return;
         }
         
         const isDark = document.documentElement.classList.contains('dark');
         
-        // Limpiar gráfico existente
+        // Destruir gráfico existente
         if (barChart) {
-            barChart.remove();
+            barChart.destroy();
             barChart = null;
         }
         
@@ -530,13 +529,8 @@ function renderBarChart() {
         });
         
         // Agrupar por mes y sumar PQ liberados
-        const monthlyData = {};
+        const monthlyData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
         const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-        
-        // Inicializar todos los meses en 0
-        for (let i = 0; i < 12; i++) {
-            monthlyData[i] = 0;
-        }
         
         // Sumar PQ liberados por mes
         releasedShipments.forEach(shipment => {
@@ -548,75 +542,68 @@ function renderBarChart() {
             }
         });
         
-        // Crear gráfico
-        barChart = LightweightCharts.createChart(chartElement, {
-            layout: {
-                background: { color: isDark ? '#1e293b' : '#ffffff' },
-                textColor: isDark ? '#cbd5e1' : '#475569',
+        // Crear gráfico con Chart.js
+        const ctx = chartElement.getContext('2d');
+        barChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: meses,
+                datasets: [{
+                    label: 'PQ Liberados',
+                    data: monthlyData,
+                    backgroundColor: '#22c55e',
+                    borderColor: '#16a34a',
+                    borderWidth: 1,
+                    borderRadius: 4,
+                }]
             },
-            width: chartElement.clientWidth,
-            height: 256,
-            rightPriceScale: {
-                visible: true,
-            },
-            timeScale: {
-                visible: true,
-                timeVisible: false,
-                secondsVisible: false,
-            },
-            grid: {
-                vertLines: {
-                    color: isDark ? '#334155' : '#e2e8f0',
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                aspectRatio: 2.5,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                        padding: 12,
+                        titleColor: '#fff',
+                        bodyColor: '#fff',
+                        callbacks: {
+                            label: function(context) {
+                                return `PQ Liberados: ${context.parsed.y.toFixed(3)}`;
+                            }
+                        }
+                    }
                 },
-                horzLines: {
-                    color: isDark ? '#334155' : '#e2e8f0',
-                },
-            },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            color: isDark ? '#334155' : '#e2e8f0',
+                        },
+                        ticks: {
+                            color: isDark ? '#cbd5e1' : '#475569',
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false,
+                        },
+                        ticks: {
+                            color: isDark ? '#cbd5e1' : '#475569',
+                        }
+                    }
+                }
+            }
         });
-
-        // Crear serie de barras
-        barSeries = barChart.addBarSeries({
-            upColor: '#22c55e',
-            downColor: '#22c55e',
-        });
-
-        // Preparar datos para el gráfico
-        const chartData = [];
-        for (let i = 0; i < 12; i++) {
-            // Formato YYYY-MM-DD requerido por lightweight-charts
-            const timeStr = `${currentYear}-${String(i + 1).padStart(2, '0')}-01`;
-            
-            chartData.push({
-                time: timeStr,
-                open: 0,
-                high: monthlyData[i],
-                low: 0,
-                close: monthlyData[i],
-            });
-        }
-
-        barSeries.setData(chartData);
         
-        // Ajustar escala para mostrar todos los datos
-        barChart.timeScale().fitContent();
-        
-        console.log('Gráfico de barras renderizado correctamente');
+        console.log('Gráfico de barras renderizado correctamente con Chart.js');
     } catch (error) {
         console.error('Error al renderizar gráfico de barras:', error);
     }
 }
-
-// Redimensionar gráfico cuando cambia el tamaño de la ventana
-window.addEventListener('resize', () => {
-    if (barChart) {
-        const chartElement = document.getElementById('bar-chart');
-        if (chartElement) {
-            barChart.applyOptions({
-                width: chartElement.clientWidth,
-            });
-        }
-    }
-});
 
 // ==============================================
 // RENDERIZAR TABLA DE ENVÍOS
