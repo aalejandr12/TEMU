@@ -631,7 +631,7 @@ function renderBarChart() {
         // Actualizar leyenda con el año seleccionado
         const legendElement = document.getElementById('bar-chart-legend');
         if (legendElement) {
-            legendElement.textContent = `PQ Liberados por Mes (${selectedYear})`;
+            legendElement.textContent = `Paquetes Liberados por Mes (${selectedYear})`;
         }
         
         console.log(`Gráfico de barras renderizado correctamente con Chart.js para el año ${selectedYear}`);
