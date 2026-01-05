@@ -225,14 +225,18 @@ function applyFilters() {
     }
     
     // Actualizar dashboard
-    currentShipments = filtered; // Para la tabla usamos solo el filtro de año
+    // Para la tabla, excluir envíos liberados (ya finalizados)
+    const activeShipments = filtered.filter(shipment => 
+        shipment.status.toLowerCase() !== 'liberado'
+    );
+    currentShipments = activeShipments;
     const statsDistribution = calculateStats(filteredDistribution);
     const statsBar = calculateStats(filteredBar);
     
     renderStatsCards(statsDistribution);
     renderDistributionChart(statsDistribution);
     renderBarChart(); // Ahora no recibe parámetros, lee directamente allShipments
-    renderShipmentsTable(filtered, 1, 10);
+    renderShipmentsTable(activeShipments, 1, 10);
     
     console.log(`Filtro de año: ${filtered.length} registros`);
     console.log(`Gráfico distribución: ${filteredDistribution.length} registros`);
