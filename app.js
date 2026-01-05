@@ -231,6 +231,8 @@ function applyFilters() {
         !shipment.status.toLowerCase().includes('liberado')
     );
     currentShipments = activeShipments;
+    allShipmentsData = filtered; // Todos los envíos sin excluir liberados
+    
     const statsDistribution = calculateStats(filteredDistribution);
     const statsBar = calculateStats(filteredBar);
     
@@ -238,6 +240,7 @@ function applyFilters() {
     renderDistributionChart(statsDistribution);
     renderBarChart(); // Ahora no recibe parámetros, lee directamente allShipments
     renderShipmentsTable(activeShipments, 1, 10);
+    renderAllShipmentsTable(allShipmentsData, 1, 10);
     
     console.log(`Filtro de año: ${filtered.length} registros`);
     console.log(`Gráfico distribución: ${filteredDistribution.length} registros`);
@@ -679,6 +682,23 @@ function renderShipmentsTable(shipments, page = 1, perPage = 10) {
     updatePagination(shipments.length, page, perPage);
 }
 
+function renderAllShipmentsTable(shipments, page = 1, perPage = 10) {
+    const tbody = document.getElementById('all-shipments-tbody');
+    tbody.innerHTML = '';
+
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    const paginatedShipments = shipments.slice(start, end);
+
+    paginatedShipments.forEach((shipment, index) => {
+        const row = createShipmentRow(shipment, start + index === 0);
+        tbody.appendChild(row);
+    });
+
+    // Actualizar paginación
+    updatePaginationAll(shipments.length, page, perPage);
+}
+
 // ==============================================
 // CREAR FILA DE ENVÍO
 // ==============================================
@@ -788,10 +808,18 @@ function getStatusColor(status) {
 // ==============================================
 // ACTUALIZAR PAGINACIÓN
 // ==============================================
+// VARIABLES DE PAGINACIÓN
+// ==============================================
 
+// Para tabla de envíos activos
 let currentPage = 1;
 let totalPages = 1;
 let currentShipments = [];
+
+// Para tabla de todos los envíos
+let currentPageAll = 1;
+let totalPagesAll = 1;
+let allShipmentsData = [];
 
 function updatePagination(totalItems, page, perPage) {
     currentPage = page;
@@ -812,6 +840,27 @@ function updatePagination(totalItems, page, perPage) {
     // Actualizar botones
     document.getElementById('btn-prev').disabled = page === 1;
     document.getElementById('btn-next').disabled = page === totalPages;
+}
+
+function updatePaginationAll(totalItems, page, perPage) {
+    currentPageAll = page;
+    totalPagesAll = Math.ceil(totalItems / perPage);
+
+    const start = (page - 1) * perPage + 1;
+    const end = Math.min(page * perPage, totalItems);
+
+    document.getElementById('pagination-info-all').innerHTML = `
+        Mostrando <span class="font-medium text-slate-900 dark:text-white">${start}</span> a 
+        <span class="font-medium text-slate-900 dark:text-white">${end}</span> de 
+        <span class="font-medium text-slate-900 dark:text-white">${totalItems}</span> resultados
+    `;
+
+    // Actualizar número de página
+    document.getElementById('current-page-btn-all').textContent = page;
+
+    // Actualizar botones
+    document.getElementById('btn-prev-all').disabled = page === 1;
+    document.getElementById('btn-next-all').disabled = page === totalPagesAll;
 }
 
 // ==============================================
@@ -963,7 +1012,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Paginación
+    // Paginación - Envíos Activos
     document.getElementById('btn-prev')?.addEventListener('click', () => {
         if (currentPage > 1) {
             renderShipmentsTable(currentShipments, currentPage - 1, 10);
@@ -973,6 +1022,19 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('btn-next')?.addEventListener('click', () => {
         if (currentPage < totalPages) {
             renderShipmentsTable(currentShipments, currentPage + 1, 10);
+        }
+    });
+
+    // Paginación - Todos los Envíos
+    document.getElementById('btn-prev-all')?.addEventListener('click', () => {
+        if (currentPageAll > 1) {
+            renderAllShipmentsTable(allShipmentsData, currentPageAll - 1, 10);
+        }
+    });
+
+    document.getElementById('btn-next-all')?.addEventListener('click', () => {
+        if (currentPageAll < totalPagesAll) {
+            renderAllShipmentsTable(allShipmentsData, currentPageAll + 1, 10);
         }
     });
 
