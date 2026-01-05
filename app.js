@@ -1123,6 +1123,190 @@ document.addEventListener('DOMContentLoaded', () => {
             closeDetailModal();
         }
     });
+
+    // ==============================================
+    // NAVEGACIÓN SPA - CAMBIAR VISTAS
+    // ==============================================
+    
+    // Event listeners para el menú de navegación
+    document.getElementById('nav-tablero')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showView('view-dashboard');
+        setActiveNavItem('nav-tablero');
+    });
+
+    document.getElementById('nav-envios')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showView('view-envios');
+        setActiveNavItem('nav-envios');
+        // Renderizar tabla de todos los envíos cuando se muestre la vista
+        renderAllShipmentsTable(allShipments);
+    });
+
+    document.getElementById('nav-analiticas')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        // Placeholder por ahora
+        alert('Vista de Analíticas - Próximamente');
+    });
+
+    // Paginación para tabla de todos los envíos
+    let currentPageAll = 1;
+    let totalPagesAll = 1;
+
+    document.getElementById('btn-prev-all')?.addEventListener('click', () => {
+        if (currentPageAll > 1) {
+            currentPageAll--;
+            renderAllShipmentsTable(allShipments, currentPageAll);
+        }
+    });
+
+    document.getElementById('btn-next-all')?.addEventListener('click', () => {
+        if (currentPageAll < totalPagesAll) {
+            currentPageAll++;
+            renderAllShipmentsTable(allShipments, currentPageAll);
+        }
+    });
 });
 
+// ==============================================
+// FUNCIÓN PARA CAMBIAR ENTRE VISTAS (SPA)
+// ==============================================
 
+function showView(viewId) {
+    // Ocultar todas las vistas
+    document.querySelectorAll('.view').forEach(view => {
+        view.classList.add('hidden');
+    });
+    
+    // Mostrar la vista seleccionada
+    const targetView = document.getElementById(viewId);
+    if (targetView) {
+        targetView.classList.remove('hidden');
+    }
+}
+
+function setActiveNavItem(navId) {
+    // Remover clases activas de todos los enlaces
+    document.querySelectorAll('.nav-link').forEach(link => {
+        link.classList.remove('bg-primary/10', 'text-primary', 'font-medium');
+        link.classList.add('text-slate-600', 'dark:text-slate-400');
+        const icon = link.querySelector('.material-symbols-outlined');
+        if (icon) {
+            icon.classList.remove('filled');
+        }
+    });
+    
+    // Agregar clases activas al enlace seleccionado
+    const activeLink = document.getElementById(navId);
+    if (activeLink) {
+        activeLink.classList.add('bg-primary/10', 'text-primary', 'font-medium');
+        activeLink.classList.remove('text-slate-600', 'dark:text-slate-400');
+        const icon = activeLink.querySelector('.material-symbols-outlined');
+        if (icon && navId === 'nav-tablero') {
+            icon.classList.add('filled');
+        }
+    }
+}
+
+// ==============================================
+// RENDERIZAR TABLA DE TODOS LOS ENVÍOS
+// ==============================================
+
+function renderAllShipmentsTable(shipments, page = 1, perPage = 10) {
+    const tbody = document.getElementById('all-shipments-tbody');
+    if (!tbody) return;
+    
+    tbody.innerHTML = '';
+
+    if (!shipments || shipments.length === 0) {
+        tbody.innerHTML = `
+            <tr>
+                <td colspan="6" class="px-6 py-12 text-center">
+                    <div class="flex flex-col items-center gap-3">
+                        <span class="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600">inbox</span>
+                        <p class="text-slate-500 dark:text-slate-400">No hay envíos disponibles</p>
+                    </div>
+                </td>
+            </tr>
+        `;
+        return;
+    }
+
+    const start = (page - 1) * perPage;
+    const end = start + perPage;
+    const paginatedShipments = shipments.slice(start, end);
+
+    paginatedShipments.forEach((shipment) => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors';
+        
+        const statusInfo = getStatusInfo(shipment.status);
+        
+        tr.innerHTML = `
+            <td class="px-6 py-4">
+                <span class="font-medium text-slate-900 dark:text-white">${shipment.mawbFirstLeg || '-'}</span>
+            </td>
+            <td class="px-6 py-4">
+                <span class="text-slate-600 dark:text-slate-400">${shipment.mawbSecondLeg || '-'}</span>
+            </td>
+            <td class="px-6 py-4">
+                <span class="px-2 py-1 text-xs rounded-full ${statusInfo.badgeClass}">
+                    ${statusInfo.label}
+                </span>
+            </td>
+            <td class="px-6 py-4 text-slate-600 dark:text-slate-400">
+                ${shipment.liberacion || '-'}
+            </td>
+            <td class="px-6 py-4 text-slate-900 dark:text-white font-medium">
+                ${shipment.pqLiberados ? parsePQ(shipment.pqLiberados).toLocaleString('es-SV') : '-'}
+            </td>
+            <td class="px-6 py-4 text-center">
+                <button onclick='openDetailModal(${JSON.stringify(shipment).replace(/'/g, "&#39;")})' 
+                        class="text-primary hover:text-primary-dark transition-colors focus-ring px-2 py-1 rounded"
+                        aria-label="Ver detalles">
+                    <span class="material-symbols-outlined text-sm">visibility</span>
+                    Ver
+                </button>
+            </td>
+        `;
+        
+        tbody.appendChild(tr);
+    });
+
+    // Actualizar paginación
+    updatePaginationAll(shipments.length, page, perPage);
+}
+
+function updatePaginationAll(totalItems, page, perPage) {
+    const currentPageAll = page;
+    const totalPagesAll = Math.ceil(totalItems / perPage);
+
+    const start = (page - 1) * perPage + 1;
+    const end = Math.min(page * perPage, totalItems);
+
+    const paginationInfo = document.getElementById('pagination-info-all');
+    if (paginationInfo) {
+        paginationInfo.innerHTML = `
+            Mostrando <span class="font-medium text-slate-900 dark:text-white">${start}</span> a 
+            <span class="font-medium text-slate-900 dark:text-white">${end}</span> de 
+            <span class="font-medium text-slate-900 dark:text-white">${totalItems}</span> resultados
+        `;
+    }
+
+    // Actualizar número de página
+    const currentPageBtn = document.getElementById('current-page-btn-all');
+    if (currentPageBtn) {
+        currentPageBtn.textContent = page;
+    }
+
+    // Actualizar botones
+    const btnPrev = document.getElementById('btn-prev-all');
+    const btnNext = document.getElementById('btn-next-all');
+    
+    if (btnPrev) btnPrev.disabled = page === 1;
+    if (btnNext) btnNext.disabled = page === totalPagesAll;
+    
+    // Guardar estado para los event listeners
+    window.currentPageAll = currentPageAll;
+    window.totalPagesAll = totalPagesAll;
+}
