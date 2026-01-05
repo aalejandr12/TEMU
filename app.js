@@ -574,26 +574,24 @@ function renderBarChart() {
             },
         });
 
-        // Crear serie de histograma
-        barSeries = barChart.addHistogramSeries({
-            color: '#22c55e',
-            priceFormat: {
-                type: 'volume',
-            },
+        // Crear serie de barras
+        barSeries = barChart.addBarSeries({
+            upColor: '#22c55e',
+            downColor: '#22c55e',
         });
 
         // Preparar datos para el gráfico
         const chartData = [];
         for (let i = 0; i < 12; i++) {
-            // Crear fecha para cada mes (día 1 de cada mes)
-            const date = new Date(currentYear, i, 1);
             // Formato YYYY-MM-DD requerido por lightweight-charts
             const timeStr = `${currentYear}-${String(i + 1).padStart(2, '0')}-01`;
             
             chartData.push({
                 time: timeStr,
-                value: monthlyData[i],
-                color: '#22c55e',
+                open: 0,
+                high: monthlyData[i],
+                low: 0,
+                close: monthlyData[i],
             });
         }
 
