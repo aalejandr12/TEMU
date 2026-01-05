@@ -226,8 +226,9 @@ function applyFilters() {
     
     // Actualizar dashboard
     // Para la tabla, excluir envíos liberados (ya finalizados)
+    // Estado original: "Liberado en Aduanas"
     const activeShipments = filtered.filter(shipment => 
-        shipment.status.toLowerCase() !== 'liberado'
+        !shipment.status.toLowerCase().includes('liberado')
     );
     currentShipments = activeShipments;
     const statsDistribution = calculateStats(filteredDistribution);
@@ -414,12 +415,14 @@ function calculateStats(shipments) {
     };
 
     shipments.forEach(shipment => {
-        const status = shipment.status.toLowerCase();
-        if (status.includes('review')) stats.review++;
-        else if (status.includes('pending')) stats.pending++;
-        else if (status.includes('transmission')) stats.transmissions++;
-        else if (status.includes('inspection')) stats.inspection++;
-        else if (status.includes('released')) stats.released++;
+        const status = shipment.status.toLowerCase().trim();
+        // Estados originales del Google Sheet:
+        // Pendiente, Revision, Transmisiones, Inspección, Liberado en Aduanas
+        if (status.includes('revision')) stats.review++;
+        else if (status.includes('pendiente')) stats.pending++;
+        else if (status.includes('transmisiones') || status.includes('transmision')) stats.transmissions++;
+        else if (status.includes('inspeccion') || status.includes('inspección')) stats.inspection++;
+        else if (status.includes('liberado')) stats.released++;
     });
 
     // Calcular porcentajes
