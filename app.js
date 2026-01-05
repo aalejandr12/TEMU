@@ -132,6 +132,9 @@ let barFilters = {
     dateTo: null
 };
 
+// Año independiente para el gráfico de barras (PQ Liberados por Mes)
+let barChartYear = new Date().getFullYear(); // Por defecto, año actual
+
 // ==============================================
 // FUNCIÓN PARA PARSEAR FECHA
 // ==============================================
@@ -518,14 +521,14 @@ function renderBarChart() {
             barChart = null;
         }
         
-        // Obtener año actual
-        const currentYear = new Date().getFullYear();
+        // Usar el año configurado en barChartYear
+        const selectedYear = barChartYear;
         
-        // Filtrar envíos liberados del año actual
+        // Filtrar envíos liberados del año seleccionado
         const releasedShipments = allShipments.filter(shipment => {
             if (!shipment.liberacion) return false;
             const liberacionDate = parseDate(shipment.liberacion);
-            return liberacionDate && liberacionDate.getFullYear() === currentYear;
+            return liberacionDate && liberacionDate.getFullYear() === selectedYear;
         });
         
         // Agrupar por mes y sumar PQ liberados
@@ -599,7 +602,13 @@ function renderBarChart() {
             }
         });
         
-        console.log('Gráfico de barras renderizado correctamente con Chart.js');
+        // Actualizar leyenda con el año seleccionado
+        const legendElement = document.getElementById('bar-chart-legend');
+        if (legendElement) {
+            legendElement.textContent = `PQ Liberados por Mes (${selectedYear})`;
+        }
+        
+        console.log(`Gráfico de barras renderizado correctamente con Chart.js para el año ${selectedYear}`);
     } catch (error) {
         console.error('Error al renderizar gráfico de barras:', error);
     }
@@ -949,24 +958,14 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
     
-    // Aplicar filtros del gráfico de barras
-    document.getElementById('apply-filters-btn-bar')?.addEventListener('click', () => {
-        globalYearFilter = document.getElementById('filter-year-bar').value;
-        barFilters.status = document.getElementById('filter-status-bar').value;
-        barFilters.dateFrom = document.getElementById('filter-date-from-bar').value;
-        barFilters.dateTo = document.getElementById('filter-date-to-bar').value;
-        
-        // Sincronizar solo el año con el otro menú
-        syncYearFilter();
-        
-        applyFilters();
-        filterMenuBar?.classList.add('hidden');
-    });
-    
-    // Resetear filtros del gráfico de barras
-    document.getElementById('reset-filters-btn-bar')?.addEventListener('click', () => {
-        resetBarFilters();
-        filterMenuBar?.classList.add('hidden');
+    // Aplicar filtro de año del gráfico de barras (independiente)
+    document.getElementById('apply-year-filter-chart-bar')?.addEventListener('click', () => {
+        const yearSelect = document.getElementById('filter-year-chart-bar');
+        if (yearSelect) {
+            barChartYear = parseInt(yearSelect.value);
+            renderBarChart(); // Solo re-renderiza el gráfico de barras
+            filterMenuBar?.classList.add('hidden');
+        }
     });
 
     // Refresh cada 5 minutos
