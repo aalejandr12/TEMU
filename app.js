@@ -524,12 +524,21 @@ function renderBarChart() {
         // Usar el año configurado en barChartYear
         const selectedYear = barChartYear;
         
+        console.log(`Filtrando datos para año ${selectedYear}`);
+        console.log(`Total de envíos: ${allShipments.length}`);
+        
         // Filtrar envíos liberados del año seleccionado
         const releasedShipments = allShipments.filter(shipment => {
             if (!shipment.liberacion) return false;
             const liberacionDate = parseDate(shipment.liberacion);
-            return liberacionDate && liberacionDate.getFullYear() === selectedYear;
+            const matches = liberacionDate && liberacionDate.getFullYear() === selectedYear;
+            if (matches) {
+                console.log(`Envío liberado en ${selectedYear}:`, shipment.liberacion, 'PQ:', shipment.pqLiberados);
+            }
+            return matches;
         });
+        
+        console.log(`Envíos liberados en ${selectedYear}: ${releasedShipments.length}`);
         
         // Agrupar por mes y sumar PQ liberados
         const monthlyData = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
@@ -542,8 +551,11 @@ function renderBarChart() {
                 const month = liberacionDate.getMonth();
                 const pqLiberados = parseFloat(shipment.pqLiberados) || 0;
                 monthlyData[month] += pqLiberados;
+                console.log(`  Mes ${month + 1} (${meses[month]}): +${pqLiberados} = ${monthlyData[month]}`);
             }
         });
+        
+        console.log('Datos mensuales finales:', monthlyData);
         
         // Crear gráfico con Chart.js
         const ctx = chartElement.getContext('2d');
