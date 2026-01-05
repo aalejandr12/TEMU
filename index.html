@@ -100,13 +100,9 @@
                 <span class="material-symbols-outlined filled">dashboard</span>
                 Tablero
             </a>
-            <a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors group focus-ring" href="#active-shipments">
+            <a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors group focus-ring" href="#">
                 <span class="material-symbols-outlined group-hover:text-slate-900 dark:group-hover:text-slate-200">inventory_2</span>
-                Envíos Activos
-            </a>
-            <a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors group focus-ring" href="#all-shipments">
-                <span class="material-symbols-outlined group-hover:text-slate-900 dark:group-hover:text-slate-200">list_alt</span>
-                Todos los Envíos
+                Envíos
             </a>
             <a class="flex items-center gap-3 px-3 py-2.5 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 rounded-md transition-colors group focus-ring" href="#">
                 <span class="material-symbols-outlined group-hover:text-slate-900 dark:group-hover:text-slate-200">analytics</span>
@@ -367,8 +363,8 @@
                 </div>
             </div>
 
-            <!-- Shipments Table - Active Only -->
-            <div id="active-shipments" class="bg-white dark:bg-surface-dark rounded-lg shadow-sm border border-border-light dark:border-border-dark overflow-hidden">
+            <!-- Shipments Table -->
+            <div class="bg-white dark:bg-surface-dark rounded-lg shadow-sm border border-border-light dark:border-border-dark overflow-hidden">
                 <div class="p-6 border-b border-border-light dark:border-border-dark flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h3 class="text-base font-semibold text-slate-900 dark:text-white">Detalle de Envíos Activos</h3>
@@ -421,66 +417,6 @@
                             1
                         </button>
                         <button id="btn-next" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
-                            <span class="material-symbols-outlined text-sm">chevron_right</span>
-                        </button>
-                    </nav>
-                </div>
-            </div>
-
-            <!-- All Shipments Table -->
-            <div id="all-shipments" class="bg-white dark:bg-surface-dark rounded-lg shadow-sm border border-border-light dark:border-border-dark overflow-hidden">
-                <div class="p-6 border-b border-border-light dark:border-border-dark flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h3 class="text-base font-semibold text-slate-900 dark:text-white">Todos los Envíos</h3>
-                        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Vista completa de todos los envíos, incluyendo liberados.</p>
-                    </div>
-                    <div class="flex gap-2">
-                        <button class="px-3 py-1.5 bg-white dark:bg-slate-800 border border-border-light dark:border-border-dark text-slate-700 dark:text-slate-300 rounded text-sm font-medium hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors flex items-center gap-1.5 focus-ring" aria-label="Filtrar resultados">
-                            <span class="material-symbols-outlined text-sm">filter_list</span> Filtrar
-                        </button>
-                        <button class="px-3 py-1.5 bg-primary/10 text-primary border border-primary/20 rounded text-sm font-medium hover:bg-primary/20 transition-colors flex items-center gap-1.5 focus-ring" aria-label="Exportar datos">
-                            <span class="material-symbols-outlined text-sm">download</span> Exportar
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="overflow-x-auto custom-scrollbar relative">
-                    <table class="w-full text-left text-sm">
-                        <thead class="sticky top-0 z-10 bg-slate-50 dark:bg-slate-800/95 backdrop-blur text-slate-500 dark:text-slate-400 border-b border-border-light dark:border-border-dark">
-                            <tr>
-                                <th class="px-6 py-3 font-medium whitespace-nowrap">MAWB Primera Etapa</th>
-                                <th class="px-6 py-3 font-medium whitespace-nowrap">MAWB Segunda Etapa</th>
-                                <th class="px-6 py-3 font-medium">Estado</th>
-                                <th class="px-6 py-3 font-medium whitespace-nowrap">Período de Revisión</th>
-                                <th class="px-6 py-3 font-medium text-center">Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody id="all-shipments-tbody" class="divide-y divide-border-light dark:divide-border-dark">
-                            <tr>
-                                <td colspan="5" class="px-6 py-12 text-center">
-                                    <div class="flex flex-col items-center gap-3">
-                                        <span class="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600">cloud_sync</span>
-                                        <p class="text-slate-500 dark:text-slate-400">Cargando datos desde Google Sheets...</p>
-                                    </div>
-                                </td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-                
-                <!-- Pagination -->
-                <div class="bg-white dark:bg-surface-dark px-6 py-3 border-t border-border-light dark:border-border-dark flex items-center justify-between">
-                    <p id="pagination-info-all" class="text-xs text-slate-500 dark:text-slate-400">
-                        Esperando datos...
-                    </p>
-                    <nav class="flex gap-1">
-                        <button id="btn-prev-all" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-50">
-                            <span class="material-symbols-outlined text-sm">chevron_left</span>
-                        </button>
-                        <button id="current-page-btn-all" class="w-8 h-8 flex items-center justify-center rounded-full bg-primary text-white text-xs font-medium shadow-sm shadow-orange-200 dark:shadow-none">
-                            1
-                        </button>
-                        <button id="btn-next-all" class="w-8 h-8 flex items-center justify-center rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800">
                             <span class="material-symbols-outlined text-sm">chevron_right</span>
                         </button>
                     </nav>
