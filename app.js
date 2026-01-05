@@ -340,7 +340,8 @@ function parseSheetData(rows) {
     const colPrealerta = getColumnIndex(['prealerta']);
     const colArribo = getColumnIndex(['arribo']);
     const colLiberacion = getColumnIndex(['liberacion', 'liberación']);
-    const colReference = getColumnIndex(['po liberados', 'referencias', 'reference']);
+    const colPqLiberados = getColumnIndex(['pq liberados', 'po liberados']);
+    const colReference = getColumnIndex(['referencias', 'reference']);
     const colComments = getColumnIndex(['comentario', 'comment']);
 
     console.log('Columnas detectadas:', {
@@ -348,7 +349,9 @@ function parseSheetData(rows) {
         mawbSecond: colMawbSecond,
         status: colStatus,
         startReview: colStartReview,
-        endReview: colEndReview
+        endReview: colEndReview,
+        liberacion: colLiberacion,
+        pqLiberados: colPqLiberados
     });
     
     for (let i = 1; i < rows.length; i++) {
@@ -367,6 +370,7 @@ function parseSheetData(rows) {
             prealerta: colPrealerta >= 0 ? (row[colPrealerta] || '') : '',
             arribo: colArribo >= 0 ? (row[colArribo] || '') : '',
             liberacion: colLiberacion >= 0 ? (row[colLiberacion] || '') : '',
+            pqLiberados: colPqLiberados >= 0 ? (row[colPqLiberados] || '') : '',
             reference: colReference >= 0 ? (row[colReference] || '') : '',
             comments: colComments >= 0 ? (row[colComments] || '') : ''
         };
@@ -375,6 +379,15 @@ function parseSheetData(rows) {
     }
 
     console.log(`Cargados ${shipments.length} registros del Google Sheet`);
+    
+    // Log de ejemplo para verificar mapeo
+    if (shipments.length > 0) {
+        console.log('Shipment ejemplo:', shipments[0]);
+        console.log('Campos clave:', {
+            liberacion: shipments[0]?.liberacion,
+            pqLiberados: shipments[0]?.pqLiberados
+        });
+    }
 
     // Calcular estadísticas
     const stats = calculateStats(shipments);
@@ -549,7 +562,8 @@ function renderBarChart() {
             const liberacionDate = parseDate(shipment.liberacion);
             if (liberacionDate) {
                 const month = liberacionDate.getMonth();
-                const pqLiberados = parseFloat(shipment.pqLiberados) || 0;
+                // Parse robusto del número (maneja comas y puntos)
+                const pqLiberados = parseFloat(String(shipment.pqLiberados ?? '').replace(',', '.')) || 0;
                 monthlyData[month] += pqLiberados;
                 console.log(`  Mes ${month + 1} (${meses[month]}): +${pqLiberados} = ${monthlyData[month]}`);
             }
