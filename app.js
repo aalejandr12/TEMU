@@ -228,7 +228,7 @@ function applyFilters() {
     
     renderStatsCards(statsDistribution);
     renderDistributionChart(statsDistribution);
-    renderBarChart(statsBar);
+    renderBarChart(); // Ahora no recibe parámetros, lee directamente allShipments
     renderShipmentsTable(filtered, 1, 10);
     
     console.log(`Filtro de año: ${filtered.length} registros`);
@@ -491,35 +491,167 @@ function renderDistributionChart(stats) {
 }
 
 // ==============================================
-// RENDERIZAR GRÁFICO DE BARRAS
+// RENDERIZAR GRÁFICO DE BARRAS (PQ LIBERADOS POR MES)
 // ==============================================
 
-function renderBarChart(stats) {
-    const maxValue = Math.max(stats.pending, stats.review, stats.transmissions, stats.inspection, stats.released) || 1;
+let barChart = null;
+let barSeries = null;
+
+function renderBarChart() {
+    const chartElement = document.getElementById('bar-chart');
+    const isDark = document.documentElement.classList.contains('dark');
     
-    // Animar las barras con altura proporcional
-    const bars = [
-        { id: 'bar-pending', value: stats.pending, tooltip: 'tooltip-pending' },
-        { id: 'bar-review', value: stats.review, tooltip: 'tooltip-review' },
-        { id: 'bar-transmissions', value: stats.transmissions, tooltip: 'tooltip-transmissions' },
-        { id: 'bar-inspection', value: stats.inspection, tooltip: 'tooltip-inspection' },
-        { id: 'bar-released', value: stats.released, tooltip: 'tooltip-released' }
-    ];
+    // Limpiar gráfico existente
+    if (barChart) {
+        barChart.remove();
+        barChart = null;
+    }
     
-    bars.forEach(bar => {
-        const element = document.getElementById(bar.id);
-        const tooltipElement = document.getElementById(bar.tooltip);
-        const percentage = (bar.value / maxValue) * 100;
+    // Obtener año actual
+    const currentYear = new Date().getFullYear();
+    
+    // Filtrar envíos liberados del año actual
+    const releasedShipments = allShipments.filter(shipment => {
+        const liberacionDate = parseDate(shipment.liberacion);
+        return liberacionDate && liberacionDate.getFullYear() === currentYear;
+    });
+    
+    // Agrupar por mes y sumar PQ liberados
+    const monthlyData = {};
+    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    
+    // Inicializar todos los meses en 0
+    for (let i = 0; i < 12; i++) {
+        monthlyData[i] = 0;
+    }
+    
+    // Sumar PQ liberados por mes
+    releasedShipments.forEach(shipment => {
+        const liberacionDate = parseDate(shipment.liberacion);
+        const month = liberacionDate.getMonth();
+        const pqLiberados = parseFloat(shipment.pqLiberados) || 0;
+        monthlyData[month] += pqLiberados;
+    });
+    
+    // Crear gráfico
+    barChart = LightweightCharts.createChart(chartElement, {
+        layout: {
+            background: { color: isDark ? '#1e293b' : '#ffffff' },
+            textColor: isDark ? '#cbd5e1' : '#475569',
+        },
+        width: chartElement.clientWidth,
+        height: 256,
+        rightPriceScale: {
+            visible: true,
+        },
+        timeScale: {
+            visible: true,
+            timeVisible: false,
+            secondsVisible: false,
+        },
+        grid: {
+            vertLines: {
+                color: isDark ? '#334155' : '#e2e8f0',
+            },
+            horzLines: {
+                color: isDark ? '#334155' : '#e2e8f0',
+            },
+        },
+        crosshair: {
+            mode: LightweightCharts.CrosshairMode.Normal,
+        },
+    });
+
+    // Crear serie de histograma
+    barSeries = barChart.addHistogramSeries({
+        color: '#22c55e',
+        priceFormat: {
+            type: 'volume',
+        },
+        priceScaleId: 'right',
+    });
+
+    // Preparar datos para el gráfico
+    const chartData = [];
+    for (let i = 0; i < 12; i++) {
+        // Crear fecha para cada mes (día 1 de cada mes)
+        const date = new Date(currentYear, i, 1);
+        const time = Math.floor(date.getTime() / 1000); // Convertir a timestamp Unix
         
-        // Animar altura
-        setTimeout(() => {
-            element.style.height = `${percentage}%`;
-        }, 100);
-        
-        // Actualizar tooltip
-        tooltipElement.textContent = bar.value;
+        chartData.push({
+            time: time,
+            value: monthlyData[i],
+            color: '#22c55e', // Verde para liberados
+        });
+    }
+
+    barSeries.setData(chartData);
+    
+    // Ajustar escala para mostrar todos los datos
+    barChart.timeScale().fitContent();
+    
+    // Configurar tooltip personalizado
+    const toolTip = document.createElement('div');
+    toolTip.style.cssText = `
+        position: absolute;
+        display: none;
+        padding: 8px;
+        box-sizing: border-box;
+        font-size: 12px;
+        text-align: left;
+        z-index: 1000;
+        top: 12px;
+        left: 12px;
+        pointer-events: none;
+        background: rgba(0, 0, 0, 0.8);
+        color: white;
+        border-radius: 4px;
+    `;
+    chartElement.appendChild(toolTip);
+
+    barChart.subscribeCrosshairMove(param => {
+        if (
+            param.point === undefined ||
+            !param.time ||
+            param.point.x < 0 ||
+            param.point.x > chartElement.clientWidth ||
+            param.point.y < 0 ||
+            param.point.y > chartElement.clientHeight
+        ) {
+            toolTip.style.display = 'none';
+        } else {
+            const data = param.seriesData.get(barSeries);
+            if (data) {
+                const date = new Date(data.time * 1000);
+                const monthName = meses[date.getMonth()];
+                toolTip.style.display = 'block';
+                toolTip.innerHTML = `<strong>${monthName} ${currentYear}</strong><br/>PQ Liberados: ${data.value.toFixed(3)}`;
+                
+                const coordinate = barSeries.priceToCoordinate(data.value);
+                let shiftedCoordinate = param.point.x - 50;
+                if (coordinate === null) {
+                    return;
+                }
+                shiftedCoordinate = Math.max(
+                    0,
+                    Math.min(chartElement.clientWidth - 100, shiftedCoordinate)
+                );
+                toolTip.style.left = shiftedCoordinate + 'px';
+                toolTip.style.top = '12px';
+            }
+        }
     });
 }
+
+// Redimensionar gráfico cuando cambia el tamaño de la ventana
+window.addEventListener('resize', () => {
+    if (barChart) {
+        const chartElement = document.getElementById('bar-chart');
+        barChart.applyOptions({
+            width: chartElement.clientWidth,
+        });
+    }
+});
 
 // ==============================================
 // RENDERIZAR TABLA DE ENVÍOS
