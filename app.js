@@ -946,27 +946,39 @@ document.addEventListener('DOMContentLoaded', () => {
     const filterMenuBtnBar = document.getElementById('filter-menu-btn-bar');
     const filterMenuBar = document.getElementById('filter-menu-bar');
     
-    filterMenuBtnBar?.addEventListener('click', (e) => {
-        e.stopPropagation();
-        filterMenuBar.classList.toggle('hidden');
-    });
+    console.log('Botón filtro barras:', filterMenuBtnBar);
+    console.log('Menú filtro barras:', filterMenuBar);
+    
+    if (filterMenuBtnBar && filterMenuBar) {
+        filterMenuBtnBar.addEventListener('click', (e) => {
+            e.stopPropagation();
+            console.log('Toggle menú barras');
+            filterMenuBar.classList.toggle('hidden');
+        });
+    }
     
     // Cerrar menú al hacer click fuera
     document.addEventListener('click', (e) => {
-        if (!filterMenuBar?.contains(e.target) && e.target !== filterMenuBtnBar) {
-            filterMenuBar?.classList.add('hidden');
+        if (filterMenuBar && !filterMenuBar.contains(e.target) && e.target !== filterMenuBtnBar) {
+            filterMenuBar.classList.add('hidden');
         }
     });
     
     // Aplicar filtro de año del gráfico de barras (independiente)
-    document.getElementById('apply-year-filter-chart-bar')?.addEventListener('click', () => {
-        const yearSelect = document.getElementById('filter-year-chart-bar');
-        if (yearSelect) {
-            barChartYear = parseInt(yearSelect.value);
-            renderBarChart(); // Solo re-renderiza el gráfico de barras
-            filterMenuBar?.classList.add('hidden');
-        }
-    });
+    const applyYearBtn = document.getElementById('apply-year-filter-chart-bar');
+    console.log('Botón aplicar año:', applyYearBtn);
+    
+    if (applyYearBtn) {
+        applyYearBtn.addEventListener('click', () => {
+            const yearSelect = document.getElementById('filter-year-chart-bar');
+            if (yearSelect) {
+                barChartYear = parseInt(yearSelect.value);
+                console.log('Año seleccionado:', barChartYear);
+                renderBarChart(); // Solo re-renderiza el gráfico de barras
+                filterMenuBar?.classList.add('hidden');
+            }
+        });
+    }
 
     // Refresh cada 5 minutos
     setInterval(() => {
