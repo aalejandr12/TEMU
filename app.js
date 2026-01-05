@@ -498,158 +498,125 @@ let barChart = null;
 let barSeries = null;
 
 function renderBarChart() {
-    const chartElement = document.getElementById('bar-chart');
-    const isDark = document.documentElement.classList.contains('dark');
-    
-    // Limpiar gráfico existente
-    if (barChart) {
-        barChart.remove();
-        barChart = null;
-    }
-    
-    // Obtener año actual
-    const currentYear = new Date().getFullYear();
-    
-    // Filtrar envíos liberados del año actual
-    const releasedShipments = allShipments.filter(shipment => {
-        const liberacionDate = parseDate(shipment.liberacion);
-        return liberacionDate && liberacionDate.getFullYear() === currentYear;
-    });
-    
-    // Agrupar por mes y sumar PQ liberados
-    const monthlyData = {};
-    const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
-    
-    // Inicializar todos los meses en 0
-    for (let i = 0; i < 12; i++) {
-        monthlyData[i] = 0;
-    }
-    
-    // Sumar PQ liberados por mes
-    releasedShipments.forEach(shipment => {
-        const liberacionDate = parseDate(shipment.liberacion);
-        const month = liberacionDate.getMonth();
-        const pqLiberados = parseFloat(shipment.pqLiberados) || 0;
-        monthlyData[month] += pqLiberados;
-    });
-    
-    // Crear gráfico
-    barChart = LightweightCharts.createChart(chartElement, {
-        layout: {
-            background: { color: isDark ? '#1e293b' : '#ffffff' },
-            textColor: isDark ? '#cbd5e1' : '#475569',
-        },
-        width: chartElement.clientWidth,
-        height: 256,
-        rightPriceScale: {
-            visible: true,
-        },
-        timeScale: {
-            visible: true,
-            timeVisible: false,
-            secondsVisible: false,
-        },
-        grid: {
-            vertLines: {
-                color: isDark ? '#334155' : '#e2e8f0',
-            },
-            horzLines: {
-                color: isDark ? '#334155' : '#e2e8f0',
-            },
-        },
-        crosshair: {
-            mode: LightweightCharts.CrosshairMode.Normal,
-        },
-    });
-
-    // Crear serie de histograma
-    barSeries = barChart.addHistogramSeries({
-        color: '#22c55e',
-        priceFormat: {
-            type: 'volume',
-        },
-        priceScaleId: 'right',
-    });
-
-    // Preparar datos para el gráfico
-    const chartData = [];
-    for (let i = 0; i < 12; i++) {
-        // Crear fecha para cada mes (día 1 de cada mes)
-        const date = new Date(currentYear, i, 1);
-        const time = Math.floor(date.getTime() / 1000); // Convertir a timestamp Unix
-        
-        chartData.push({
-            time: time,
-            value: monthlyData[i],
-            color: '#22c55e', // Verde para liberados
-        });
-    }
-
-    barSeries.setData(chartData);
-    
-    // Ajustar escala para mostrar todos los datos
-    barChart.timeScale().fitContent();
-    
-    // Configurar tooltip personalizado
-    const toolTip = document.createElement('div');
-    toolTip.style.cssText = `
-        position: absolute;
-        display: none;
-        padding: 8px;
-        box-sizing: border-box;
-        font-size: 12px;
-        text-align: left;
-        z-index: 1000;
-        top: 12px;
-        left: 12px;
-        pointer-events: none;
-        background: rgba(0, 0, 0, 0.8);
-        color: white;
-        border-radius: 4px;
-    `;
-    chartElement.appendChild(toolTip);
-
-    barChart.subscribeCrosshairMove(param => {
-        if (
-            param.point === undefined ||
-            !param.time ||
-            param.point.x < 0 ||
-            param.point.x > chartElement.clientWidth ||
-            param.point.y < 0 ||
-            param.point.y > chartElement.clientHeight
-        ) {
-            toolTip.style.display = 'none';
-        } else {
-            const data = param.seriesData.get(barSeries);
-            if (data) {
-                const date = new Date(data.time * 1000);
-                const monthName = meses[date.getMonth()];
-                toolTip.style.display = 'block';
-                toolTip.innerHTML = `<strong>${monthName} ${currentYear}</strong><br/>PQ Liberados: ${data.value.toFixed(3)}`;
-                
-                const coordinate = barSeries.priceToCoordinate(data.value);
-                let shiftedCoordinate = param.point.x - 50;
-                if (coordinate === null) {
-                    return;
-                }
-                shiftedCoordinate = Math.max(
-                    0,
-                    Math.min(chartElement.clientWidth - 100, shiftedCoordinate)
-                );
-                toolTip.style.left = shiftedCoordinate + 'px';
-                toolTip.style.top = '12px';
-            }
+    try {
+        const chartElement = document.getElementById('bar-chart');
+        if (!chartElement) {
+            console.error('Elemento bar-chart no encontrado');
+            return;
         }
-    });
+        
+        // Verificar si lightweight-charts está disponible
+        if (typeof LightweightCharts === 'undefined') {
+            console.error('LightweightCharts no está cargado');
+            return;
+        }
+        
+        const isDark = document.documentElement.classList.contains('dark');
+        
+        // Limpiar gráfico existente
+        if (barChart) {
+            barChart.remove();
+            barChart = null;
+        }
+        
+        // Obtener año actual
+        const currentYear = new Date().getFullYear();
+        
+        // Filtrar envíos liberados del año actual
+        const releasedShipments = allShipments.filter(shipment => {
+            if (!shipment.liberacion) return false;
+            const liberacionDate = parseDate(shipment.liberacion);
+            return liberacionDate && liberacionDate.getFullYear() === currentYear;
+        });
+        
+        // Agrupar por mes y sumar PQ liberados
+        const monthlyData = {};
+        const meses = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+        
+        // Inicializar todos los meses en 0
+        for (let i = 0; i < 12; i++) {
+            monthlyData[i] = 0;
+        }
+        
+        // Sumar PQ liberados por mes
+        releasedShipments.forEach(shipment => {
+            const liberacionDate = parseDate(shipment.liberacion);
+            if (liberacionDate) {
+                const month = liberacionDate.getMonth();
+                const pqLiberados = parseFloat(shipment.pqLiberados) || 0;
+                monthlyData[month] += pqLiberados;
+            }
+        });
+        
+        // Crear gráfico
+        barChart = LightweightCharts.createChart(chartElement, {
+            layout: {
+                background: { color: isDark ? '#1e293b' : '#ffffff' },
+                textColor: isDark ? '#cbd5e1' : '#475569',
+            },
+            width: chartElement.clientWidth,
+            height: 256,
+            rightPriceScale: {
+                visible: true,
+            },
+            timeScale: {
+                visible: true,
+                timeVisible: false,
+                secondsVisible: false,
+            },
+            grid: {
+                vertLines: {
+                    color: isDark ? '#334155' : '#e2e8f0',
+                },
+                horzLines: {
+                    color: isDark ? '#334155' : '#e2e8f0',
+                },
+            },
+        });
+
+        // Crear serie de histograma
+        barSeries = barChart.addHistogramSeries({
+            color: '#22c55e',
+            priceFormat: {
+                type: 'volume',
+            },
+        });
+
+        // Preparar datos para el gráfico
+        const chartData = [];
+        for (let i = 0; i < 12; i++) {
+            // Crear fecha para cada mes (día 1 de cada mes)
+            const date = new Date(currentYear, i, 1);
+            // Formato YYYY-MM-DD requerido por lightweight-charts
+            const timeStr = `${currentYear}-${String(i + 1).padStart(2, '0')}-01`;
+            
+            chartData.push({
+                time: timeStr,
+                value: monthlyData[i],
+                color: '#22c55e',
+            });
+        }
+
+        barSeries.setData(chartData);
+        
+        // Ajustar escala para mostrar todos los datos
+        barChart.timeScale().fitContent();
+        
+        console.log('Gráfico de barras renderizado correctamente');
+    } catch (error) {
+        console.error('Error al renderizar gráfico de barras:', error);
+    }
 }
 
 // Redimensionar gráfico cuando cambia el tamaño de la ventana
 window.addEventListener('resize', () => {
     if (barChart) {
         const chartElement = document.getElementById('bar-chart');
-        barChart.applyOptions({
-            width: chartElement.clientWidth,
-        });
+        if (chartElement) {
+            barChart.applyOptions({
+                width: chartElement.clientWidth,
+            });
+        }
     }
 });
 
