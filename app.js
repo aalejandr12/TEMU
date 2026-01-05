@@ -878,6 +878,31 @@ async function initDashboard() {
         // Guardar todos los datos
         allShipments = shipments;
         
+        // Detectar qué años hay en los datos de liberación
+        const yearsInData = new Set();
+        shipments.forEach(shipment => {
+            if (shipment.liberacion) {
+                const liberacionDate = parseDate(shipment.liberacion);
+                if (liberacionDate) {
+                    yearsInData.add(liberacionDate.getFullYear());
+                }
+            }
+        });
+        console.log('Años con datos de liberación:', Array.from(yearsInData).sort());
+        
+        // Establecer el año más reciente como predeterminado
+        if (yearsInData.size > 0) {
+            const latestYear = Math.max(...Array.from(yearsInData));
+            barChartYear = latestYear;
+            console.log(`Año por defecto para gráfico: ${latestYear}`);
+            
+            // Actualizar el selector en el HTML
+            const yearSelect = document.getElementById('filter-year-chart-bar');
+            if (yearSelect) {
+                yearSelect.value = latestYear.toString();
+            }
+        }
+        
         // Aplicar filtro por defecto (año actual 2026)
         applyFilters();
         updateLastUpdated();
