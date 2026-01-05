@@ -511,6 +511,18 @@ function renderDistributionChart(stats) {
 }
 
 // ==============================================
+// UTILIDAD: PARSEAR PQ LIBERADOS
+// ==============================================
+
+function parsePQ(value) {
+    if (value == null) return 0;
+    const s = String(value).trim();
+    const normalized = s.replace(/,/g, ''); // "1,426" -> "1426"
+    const n = Number(normalized);
+    return Number.isFinite(n) ? n : 0;
+}
+
+// ==============================================
 // RENDERIZAR GRÁFICO DE BARRAS (PQ LIBERADOS POR MES)
 // ==============================================
 
@@ -566,8 +578,7 @@ function renderBarChart() {
             const liberacionDate = parseDate(shipment.liberacion);
             if (liberacionDate) {
                 const month = liberacionDate.getMonth();
-                // Parse robusto del número (maneja comas y puntos)
-                const pqLiberados = parseFloat(String(shipment.pqLiberados ?? '').replace(',', '.')) || 0;
+                const pqLiberados = parsePQ(shipment.pqLiberados);
                 monthlyData[month] += pqLiberados;
                 console.log(`  Mes ${month + 1} (${meses[month]}): +${pqLiberados} = ${monthlyData[month]}`);
             }
@@ -605,7 +616,7 @@ function renderBarChart() {
                         bodyColor: '#fff',
                         callbacks: {
                             label: function(context) {
-                                return `PQ Liberados: ${context.parsed.y.toFixed(3)}`;
+                                return `PQ Liberados: ${context.parsed.y.toLocaleString('es-SV')}`;
                             }
                         }
                     }
