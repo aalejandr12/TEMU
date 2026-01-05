@@ -739,14 +739,15 @@ function createShipmentRow(shipment, isHighlighted = false) {
 // ==============================================
 
 function getStatusInfo(status) {
-    const statusLower = status.toLowerCase();
+    const statusLower = status.toLowerCase().trim();
     let statusKey = null;
     
-    if (statusLower.includes('review')) statusKey = 'Review';
-    else if (statusLower.includes('pending')) statusKey = 'Pending';
-    else if (statusLower.includes('transmission')) statusKey = 'Transmissions';
-    else if (statusLower.includes('inspection')) statusKey = 'Inspection';
-    else if (statusLower.includes('released')) statusKey = 'Released';
+    // Estados originales del Google Sheet: Pendiente, Revision, Transmisiones, Inspección, Liberado en Aduanas
+    if (statusLower.includes('revision')) statusKey = 'Review';
+    else if (statusLower.includes('pendiente')) statusKey = 'Pending';
+    else if (statusLower.includes('transmisiones') || statusLower.includes('transmision')) statusKey = 'Transmissions';
+    else if (statusLower.includes('inspeccion') || statusLower.includes('inspección')) statusKey = 'Inspection';
+    else if (statusLower.includes('liberado')) statusKey = 'Released';
     
     if (statusKey && STATUS[statusKey]) {
         const info = STATUS[statusKey];
