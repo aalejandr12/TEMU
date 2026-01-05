@@ -842,12 +842,25 @@ function copyToClipboard(text) {
 // ==============================================
 
 function searchShipments(query) {
-    const filtered = currentShipments.filter(shipment => {
-        const searchString = `${shipment.mawbFirstLeg} ${shipment.mawbSecondLeg} ${shipment.status} ${shipment.reference}`.toLowerCase();
-        return searchString.includes(query.toLowerCase());
-    });
-
-    renderShipmentsTable(filtered, 1, 10);
+    // Detectar qué vista está activa
+    const isDashboardActive = !document.getElementById('view-dashboard').classList.contains('hidden');
+    const isEnviosActive = !document.getElementById('view-envios').classList.contains('hidden');
+    
+    if (isDashboardActive) {
+        // Buscar en tabla de envíos activos (sin liberados)
+        const filtered = currentShipments.filter(shipment => {
+            const searchString = `${shipment.mawbFirstLeg} ${shipment.mawbSecondLeg} ${shipment.status} ${shipment.reference}`.toLowerCase();
+            return searchString.includes(query.toLowerCase());
+        });
+        renderShipmentsTable(filtered, 1, 10);
+    } else if (isEnviosActive) {
+        // Buscar en tabla de todos los envíos (incluye liberados)
+        const filtered = allShipments.filter(shipment => {
+            const searchString = `${shipment.mawbFirstLeg} ${shipment.mawbSecondLeg} ${shipment.status} ${shipment.reference}`.toLowerCase();
+            return searchString.includes(query.toLowerCase());
+        });
+        renderAllShipmentsTable(filtered, 1, 10);
+    }
 }
 
 // ==============================================
@@ -1133,6 +1146,9 @@ document.addEventListener('DOMContentLoaded', () => {
         e.preventDefault();
         showView('view-dashboard');
         setActiveNavItem('nav-tablero');
+        // Limpiar búsqueda al cambiar de vista
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) searchInput.value = '';
     });
 
     document.getElementById('nav-envios')?.addEventListener('click', (e) => {
@@ -1141,6 +1157,9 @@ document.addEventListener('DOMContentLoaded', () => {
         setActiveNavItem('nav-envios');
         // Renderizar tabla de todos los envíos cuando se muestre la vista
         renderAllShipmentsTable(allShipments);
+        // Limpiar búsqueda al cambiar de vista
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) searchInput.value = '';
     });
 
     document.getElementById('nav-analiticas')?.addEventListener('click', (e) => {
