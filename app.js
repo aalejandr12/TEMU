@@ -662,13 +662,39 @@ function renderBarChart() {
 // RENDERIZAR TABLA DE ENVÍOS
 // ==============================================
 
+// ==============================================
+// UTILIDAD: ORDENAR ENVÍOS POR FECHA
+// ==============================================
+
+function sortShipmentsByPrealertaDesc(shipments) {
+    return [...shipments].sort((a, b) => {
+        const dateA = parseDate(a.prealerta);
+        const dateB = parseDate(b.prealerta);
+        
+        // Si no tiene fecha, ponerlo al final
+        if (!dateA && !dateB) return 0;
+        if (!dateA) return 1;
+        if (!dateB) return -1;
+        
+        // Ordenar descendente (más nuevo primero)
+        return dateB.getTime() - dateA.getTime();
+    });
+}
+
+// ==============================================
+// RENDERIZAR TABLA DE ENVÍOS ACTIVOS (DASHBOARD)
+// ==============================================
+
 function renderShipmentsTable(shipments, page = 1, perPage = 10) {
     const tbody = document.getElementById('shipments-tbody');
     tbody.innerHTML = '';
 
+    // Ordenar por fecha de Prealerta descendente
+    const sortedShipments = sortShipmentsByPrealertaDesc(shipments);
+
     const start = (page - 1) * perPage;
     const end = start + perPage;
-    const paginatedShipments = shipments.slice(start, end);
+    const paginatedShipments = sortedShipments.slice(start, end);
 
     paginatedShipments.forEach((shipment, index) => {
         const row = createShipmentRow(shipment, start + index === 0);
@@ -1169,20 +1195,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Paginación para tabla de todos los envíos
-    let currentPageAll = 1;
-    let totalPagesAll = 1;
-
     document.getElementById('btn-prev-all')?.addEventListener('click', () => {
-        if (currentPageAll > 1) {
-            currentPageAll--;
-            renderAllShipmentsTable(allShipments, currentPageAll);
+        if (currentPageAllShipments > 1) {
+            renderAllShipmentsTable(cachedAllShipments, currentPageAllShipments - 1);
         }
     });
 
     document.getElementById('btn-next-all')?.addEventListener('click', () => {
-        if (currentPageAll < totalPagesAll) {
-            currentPageAll++;
-            renderAllShipmentsTable(allShipments, currentPageAll);
+        if (currentPageAllShipments < totalPagesAllShipments) {
+            renderAllShipmentsTable(cachedAllShipments, currentPageAllShipments + 1);
         }
     });
 });
@@ -1231,6 +1252,11 @@ function setActiveNavItem(navId) {
 // RENDERIZAR TABLA DE TODOS LOS ENVÍOS
 // ==============================================
 
+// Variables globales para paginación de vista de Envíos
+let currentPageAllShipments = 1;
+let totalPagesAllShipments = 1;
+let cachedAllShipments = [];
+
 function renderAllShipmentsTable(shipments, page = 1, perPage = 10) {
     const tbody = document.getElementById('all-shipments-tbody');
     if (!tbody) return;
@@ -1251,9 +1277,16 @@ function renderAllShipmentsTable(shipments, page = 1, perPage = 10) {
         return;
     }
 
+    // Ordenar por fecha de Prealerta descendente
+    const sortedShipments = sortShipmentsByPrealertaDesc(shipments);
+    
+    // Guardar en cache para paginación
+    cachedAllShipments = sortedShipments;
+    currentPageAllShipments = page;
+
     const start = (page - 1) * perPage;
     const end = start + perPage;
-    const paginatedShipments = shipments.slice(start, end);
+    const paginatedShipments = sortedShipments.slice(start, end);
 
     paginatedShipments.forEach((shipment) => {
         const tr = document.createElement('tr');
@@ -1297,8 +1330,8 @@ function renderAllShipmentsTable(shipments, page = 1, perPage = 10) {
 }
 
 function updatePaginationAll(totalItems, page, perPage) {
-    const currentPageAll = page;
-    const totalPagesAll = Math.ceil(totalItems / perPage);
+    totalPagesAllShipments = Math.ceil(totalItems / perPage);
+    currentPageAllShipments = page;
 
     const start = (page - 1) * perPage + 1;
     const end = Math.min(page * perPage, totalItems);
@@ -1323,9 +1356,5 @@ function updatePaginationAll(totalItems, page, perPage) {
     const btnNext = document.getElementById('btn-next-all');
     
     if (btnPrev) btnPrev.disabled = page === 1;
-    if (btnNext) btnNext.disabled = page === totalPagesAll;
-    
-    // Guardar estado para los event listeners
-    window.currentPageAll = currentPageAll;
-    window.totalPagesAll = totalPagesAll;
+    if (btnNext) btnNext.disabled = page === totalPagesAllShipments;
 }
