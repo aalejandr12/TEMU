@@ -254,8 +254,11 @@ function applyFilters() {
 
 function syncYearFilter() {
     // Solo sincronizar el año entre ambos menús
-    document.getElementById('filter-year').value = globalYearFilter;
-    document.getElementById('filter-year-bar').value = globalYearFilter;
+    const filterYear = document.getElementById('filter-year');
+    const filterYearBar = document.getElementById('filter-year-chart-bar');
+    
+    if (filterYear) filterYear.value = globalYearFilter;
+    if (filterYearBar) filterYearBar.value = globalYearFilter;
 }
 
 // ==============================================
@@ -287,10 +290,15 @@ function resetBarFilters() {
         dateTo: null
     };
     
-    document.getElementById('filter-year-bar').value = 'all';
-    document.getElementById('filter-status-bar').value = 'all';
-    document.getElementById('filter-date-from-bar').value = '';
-    document.getElementById('filter-date-to-bar').value = '';
+    const filterYearBar = document.getElementById('filter-year-chart-bar');
+    const filterStatusBar = document.getElementById('filter-status-bar');
+    const filterDateFromBar = document.getElementById('filter-date-from-bar');
+    const filterDateToBar = document.getElementById('filter-date-to-bar');
+    
+    if (filterYearBar) filterYearBar.value = 'all';
+    if (filterStatusBar) filterStatusBar.value = 'all';
+    if (filterDateFromBar) filterDateFromBar.value = '';
+    if (filterDateToBar) filterDateToBar.value = '';
     
     syncYearFilter();
     applyFilters();
@@ -524,7 +532,15 @@ function renderDistributionChart(stats) {
 function parsePQ(value) {
     if (value == null) return 0;
     const s = String(value).trim();
-    const normalized = s.replace(/,/g, ''); // "1,426" -> "1426"
+    // Detectar formato: si tiene punto seguido de 3 dígitos, es separador de miles
+    // Remover separadores de miles (comas o puntos según contexto)
+    let normalized = s;
+    // Si tiene punto seguido de 3 dígitos (formato europeo de miles), quitar puntos
+    if (/\d\.\d{3}/.test(s)) {
+        normalized = s.replace(/\./g, '').replace(/,/g, '.'); // 1.426,50 -> 1426.50
+    } else {
+        normalized = s.replace(/,/g, ''); // 1,426 -> 1426
+    }
     const n = Number(normalized);
     return Number.isFinite(n) ? n : 0;
 }
@@ -720,7 +736,16 @@ function createShipmentRow(shipment, isHighlighted = false) {
     const statusColor = statusInfo.colorName;
     
     if (isHighlighted) {
-        tr.className = `bg-${statusColor}-50/50 hover:bg-${statusColor}-50 dark:bg-${statusColor}-900/10 dark:hover:bg-${statusColor}-900/20 transition-colors group ring-1 ring-inset ring-${statusColor}-200 dark:ring-${statusColor}-800`;
+        // Mapeo estático de clases para evitar problemas con Tailwind
+        const highlightClasses = {
+            'blue': 'bg-blue-50/50 hover:bg-blue-50 dark:bg-blue-900/10 dark:hover:bg-blue-900/20 transition-colors group ring-1 ring-inset ring-blue-200 dark:ring-blue-800',
+            'yellow': 'bg-yellow-50/50 hover:bg-yellow-50 dark:bg-yellow-900/10 dark:hover:bg-yellow-900/20 transition-colors group ring-1 ring-inset ring-yellow-200 dark:ring-yellow-800',
+            'purple': 'bg-purple-50/50 hover:bg-purple-50 dark:bg-purple-900/10 dark:hover:bg-purple-900/20 transition-colors group ring-1 ring-inset ring-purple-200 dark:ring-purple-800',
+            'orange': 'bg-orange-50/50 hover:bg-orange-50 dark:bg-orange-900/10 dark:hover:bg-orange-900/20 transition-colors group ring-1 ring-inset ring-orange-200 dark:ring-orange-800',
+            'green': 'bg-green-50/50 hover:bg-green-50 dark:bg-green-900/10 dark:hover:bg-green-900/20 transition-colors group ring-1 ring-inset ring-green-200 dark:ring-green-800',
+            'slate': 'bg-slate-50/50 hover:bg-slate-50 dark:bg-slate-900/10 dark:hover:bg-slate-900/20 transition-colors group ring-1 ring-inset ring-slate-200 dark:ring-slate-800'
+        };
+        tr.className = highlightClasses[statusColor] || highlightClasses['slate'];
     } else {
         tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors';
     }
@@ -1345,11 +1370,12 @@ function renderAllShipmentsTable(shipments, page = 1, perPage = 10) {
     const end = start + perPage;
     const paginatedShipments = sortedShipments.slice(start, end);
 
-    paginatedShipments.forEach((shipment) => {
+    paginatedShipments.forEach((shipment, idx) => {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors';
         
         const statusInfo = getStatusInfo(shipment.status);
+        const shipmentIndex = start + idx; // Índice global en cachedAllShipments
         
         tr.innerHTML = `
             <td class="px-6 py-4">
@@ -1370,14 +1396,24 @@ function renderAllShipmentsTable(shipments, page = 1, perPage = 10) {
                 ${shipment.pqLiberados ? parsePQ(shipment.pqLiberados).toLocaleString('es-SV') : '-'}
             </td>
             <td class="px-6 py-4 text-center">
-                <button onclick='openDetailModal(${JSON.stringify(shipment).replace(/'/g, "&#39;")})' 
-                        class="text-primary hover:text-primary-dark transition-colors focus-ring px-2 py-1 rounded"
+                <button class="detail-btn-all text-primary hover:text-primary-dark transition-colors focus-ring px-2 py-1 rounded"
+                        data-index="${shipmentIndex}"
                         aria-label="Ver detalles">
                     <span class="material-symbols-outlined text-sm">visibility</span>
                     Ver
                 </button>
             </td>
         `;
+        
+        // Agregar event listener al botón
+        const detailBtn = tr.querySelector('.detail-btn-all');
+        detailBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const index = parseInt(detailBtn.getAttribute('data-index'));
+            if (cachedAllShipments[index]) {
+                openDetailModal(cachedAllShipments[index]);
+            }
+        });
         
         tbody.appendChild(tr);
     });
