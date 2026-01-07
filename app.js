@@ -56,8 +56,12 @@ const SHEET_GID = '0';
 
 async function fetchSheetData() {
     try {
-        // Fetch del CSV publicado
-        const response = await fetch(SHEET_URL);
+        // Agregar cache buster (timestamp) para evitar caché
+        const urlBase = SHEET_URL;
+        const url = urlBase + (urlBase.includes("?") ? "&" : "?") + "t=" + Date.now();
+        
+        // Fetch del CSV publicado con cache: no-store
+        const response = await fetch(url, { cache: "no-store" });
         
         if (!response.ok) {
             throw new Error(`Error HTTP: ${response.status}`);
@@ -926,6 +930,50 @@ function updateLastUpdated() {
 }
 
 // ==============================================
+// REFRESCO AUTOMÁTICO DE DATOS
+// ==============================================
+
+let autoRefreshInterval = null;
+
+function setupAutoRefresh() {
+    // Limpiar intervalo previo si existe
+    if (autoRefreshInterval) {
+        clearInterval(autoRefreshInterval);
+    }
+    
+    // Refresco automático cada 60 segundos (60000 ms)
+    autoRefreshInterval = setInterval(() => {
+        console.log('Refrescando datos automáticamente...');
+        refreshData();
+    }, 60000);
+    
+    console.log('Refresco automático activado (cada 60 segundos)');
+}
+
+async function refreshData() {
+    try {
+        // Obtener datos actualizados
+        const { shipments, stats } = await fetchSheetData();
+        
+        if (shipments.length === 0) {
+            console.warn('No se encontraron datos en el refresco');
+            return;
+        }
+        
+        // Actualizar datos globales
+        allShipments = shipments;
+        
+        // Aplicar filtros y renderizar
+        applyFilters();
+        updateLastUpdated();
+        
+        console.log('Datos actualizados exitosamente');
+    } catch (error) {
+        console.error('Error al refrescar datos:', error);
+    }
+}
+
+// ==============================================
 // INICIALIZAR DASHBOARD
 // ==============================================
 
@@ -980,6 +1028,9 @@ async function initDashboard() {
         updateLastUpdated();
 
         console.log(`Dashboard cargado exitosamente con ${shipments.length} registros totales`);
+        
+        // Configurar refresco automático cada 60 segundos
+        setupAutoRefresh();
     } catch (error) {
         console.error('Error al inicializar dashboard:', error);
         showError('Error al cargar el dashboard. Revisa la consola para más detalles.');
@@ -999,6 +1050,17 @@ document.addEventListener('DOMContentLoaded', () => {
     if (searchInput) {
         searchInput.addEventListener('input', (e) => {
             searchShipments(e.target.value);
+        });
+    }
+    
+    // Botón de actualización manual
+    const refreshBtn = document.getElementById('refresh-btn');
+    if (refreshBtn) {
+        refreshBtn.addEventListener('click', async () => {
+            console.log('Actualización manual solicitada');
+            refreshBtn.classList.add('animate-spin');
+            await refreshData();
+            refreshBtn.classList.remove('animate-spin');
         });
     }
 
@@ -1099,11 +1161,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
-
-    // Refresh cada 5 minutos
-    setInterval(() => {
-        initDashboard();
-    }, 5 * 60 * 1000);
 });
 
 // ==============================================
